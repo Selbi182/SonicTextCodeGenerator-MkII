@@ -322,6 +322,15 @@
       font-style: normal;
     }
 
+    a {
+      text-decoration: none;
+      color: var(--muted);
+      font-weight: bold;
+    }
+    a:hover {
+      color: var(--accent);
+    }
+    
     .titlecard {
       font-family: var(--titlecard);
     }
@@ -338,12 +347,13 @@
     html,
     body {
       height: 100%;
+      overflow-x: hidden;
+      background: linear-gradient(180deg, #151826, #0f1120 40%);
     }
 
     body {
       margin: 0;
       font-family: var(--sans);
-      background: linear-gradient(180deg, #151826, #0f1120 40%);
       color: var(--text);
     }
 
@@ -531,6 +541,11 @@
       color: var(--muted);
     }
     
+    footer {
+      text-align: center;
+      margin: 12px;
+    }
+    
     @media only screen and (max-aspect-ratio: 3/2) {
       h1 {
         flex-direction: column;
@@ -539,6 +554,14 @@
       h1 .small {
         width: auto !important;
       }
+      
+      #text-in {
+        font-size: 100%;
+      }
+      
+      #location-guide {
+        justify-content: start;
+      }
     }
   </style>
 </head>
@@ -546,7 +569,6 @@
   <div class="wrap">
     <header>
       <h1><span class="titlecard">Sonic Text Code Generator</span> <span class="small" style="width:0">Mk.&nbsp;II</span></h1>
-      <p class="small">A quick and simple way to generate zone title card mappings for Sonic 1 &mdash; created by Selbi</p>
     </header>
     <div class="panel">
       <div class="grid">
@@ -613,6 +635,9 @@
         </dl>
       </div>
     </div>
+    <footer class="small">
+      <a href="https://github.com/Selbi182/SonicTextCodeGenerator-MkII">Source Code</a> &mdash; Created by <a href="https://selbi.club">Selbi</a>
+    </footer>
   </div>
 </body>
 </html>
