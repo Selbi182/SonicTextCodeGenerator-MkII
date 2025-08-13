@@ -4,8 +4,306 @@
   <meta charset="utf-8">
   <title>Sonic Text Code Generator - Mk. II</title>
   <link rel="icon" href="favicon.png" type="image/png">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
+  <meta name="viewport" content="width=device-width, initial-scale=0.8">
+  <script type="text/javascript">    
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // Convenience selector
+      const $ = sel => document.querySelector(sel);
+
+      // Define defaults
+      const DEFAULTS = {
+        width: 16,
+        sprite_format: 5,
+        sprite_format_sub: 0
+      };
+      const SPACE_WIDTH = DEFAULTS.width;
+
+      // Letter mapping definitions
+      // (tile_offset, width, sprite_format, sprite_format_sub, y_delta, comment)
+      const letter = (tile_offset, width = DEFAULTS.width, sprite_format = DEFAULTS.sprite_format, sprite_format_sub = DEFAULTS.sprite_format_sub, y_delta = 0, comment = null) =>
+            ({ tile_offset, width, sprite_format, sprite_format_sub, y_delta, comment });
+      const LETTERS = {
+        A: letter(0x00),
+        B: letter(0x04),
+        C: letter(0x08),
+        D: letter(0x0C),
+        E: letter(0x10),
+        F: letter(0x14),
+        G: letter(0x18),
+        H: letter(0x1C),
+        I: letter(0x20, 8, 1), // I is half-width
+        // (J is unsupported)
+        K: letter(0x22),
+        L: letter(0x26),
+        M: letter(0x2A, 17), // M is one pixel wider
+        N: letter(0x2E),
+        O: letter(0x32),
+        P: letter(0x36),
+        // (Q is unsupported)
+        R: letter(0x3A),
+        S: letter(0x3E),
+        T: letter(0x42),
+        U: letter(0x46),
+        // (V is unsupported)
+        //W: letter(0x2A, 18, 5, 0x10, 1, "W (unsupported, this is a rotated M as dirty workaround)"),
+        // (X is unsupported)
+        Y: letter(0x4A),
+        Z: letter(0x4E)
+      };
+
+      // Select relevant DOM elements
+      const inputText = $("#text-in");
+      const inputX = $("#x-pos");
+      const inputY = $("#y-pos");
+      const out = $("#text-out");
+      const status = $("#status");
+      const summary = $("#summary");
+      const condataOut = $("#condata-out");
+      const condataOutNoAct = $("#condata-out-noact");
+
+      // Set up clipboard buttons
+      const clipboard = $("#clipboard");
+      const clipboardCon = $("#clipboard-condata-out");
+      const clipboardConNoAct = $("#clipboard-condata-out-noact");
+      clipboard.onclick = () => copyToClipboard(clipboard, out);
+      clipboardCon.onclick = () => copyToClipboard(clipboardCon, condataOut);
+      clipboardConNoAct.onclick = () => copyToClipboard(clipboardConNoAct, condataOutNoAct);
+
+      // Register input event listeners
+      [inputText, inputX, inputY].forEach(el => el.addEventListener("input", generateOutput));
+      generateOutput();
+
+      ////////////////////
+      // Main generator
+      
+      function generateOutput() {
+        
+        // Fetch input data
+        const text = (inputText.value || "");
+        const yPos = parseHex(inputY.value, 0xF8);
+        const isAutoX = (inputX.value.trim() === "" && text);
+        const xStartAuto = Math.max(0x80, (Math.floor(-measureTextWidth(text) / 2.0)) & 0xFF);
+        const xStartManual = parseHex(inputX.value, 0x80);
+
+        // Initialize output data
+        let xPos = isAutoX ? xStartAuto : xStartManual;
+        let title = "";
+        let spriteCount = 0;
+        let invalidCount = 0;
+        let overflow = false;
+        let lines = [];
+
+        // Generate sprite mapping for each char
+        for (const ch of text) {
+          const piece = createLetterPiece(ch, yPos, xPos);
+          lines.push(piece.mapping);
+          if (!piece.invalid) {
+            title += ch;
+            if (piece.mapping) {
+              spriteCount++;
+            }
+          }
+
+          if (xPos < 0x80 && ((xPos + piece.width) & 0xFF) >= 0x80) {
+            overflow = true;
+          }  
+
+          xPos = (xPos + piece.width) & 0xFF;
+          if (piece.invalid || !!piece.comment) {
+            invalidCount++;
+          }
+        }
+        
+        // Compile and output mappings
+        let output = "";
+        if (lines.length) {
+          lines.unshift(`\tdc.b ${spriteCount}\t; ${title.toUpperCase()}`);
+          lines.push(`\t\teven`);
+          output = lines.join("\n");
+        }
+        out.textContent = output;
+
+        // Generate ConData
+        if (text) {
+          const w = measureTextWidth(text);
+          const offset = isAutoX ? 0 : (xStartManual - xStartAuto);
+          
+          const conDataLine = buildConData(title, w, offset);
+          $("#condata-out").value = conDataLine;
+          
+          const conDataLineNoAct = buildConData(title, w, offset, true);
+          $("#condata-out-noact").value = conDataLineNoAct;
+        } else {
+          $("#condata-out").value = "";
+          $("#condata-out-noact").value = "";
+        }
+
+        // Update status
+        const setStatus = (message, summaryText = "", isError = false) => {
+          status.textContent = message;
+          status.classList.toggle("error", isError);
+          summary.textContent = summaryText;
+        };
+        if (!text) {
+          setStatus('Ready to generate');
+        } else if (overflow) {
+          setStatus('Generated with errors', 'Text overflow, pick a shorter name!', true);
+        } else if (invalidCount > 0) {
+          setStatus('Generated with warnings', `(${invalidCount} unsupported char${pluralize(invalidCount)})`, true);
+        } else {
+          setStatus('Generated', `(${spriteCount} sprite mapping${pluralize(spriteCount)})`);
+        }
+
+        resetClipboardButtons();
+      }
+
+      function createLetterPiece(char, yPos, xPos) {
+        if (char === " ") {
+          return {
+            mapping: "",
+            width: SPACE_WIDTH,
+            invalid: false
+          };
+        }
+
+        const l = getLetter(char);
+        if (l) {
+          return {
+            mapping: `\t\tdc.b `
+              + `$${hex(yPos - l.y_delta)}, `
+              + `$${hex(l.sprite_format)}, `
+              + `$${hex(l.sprite_format_sub)}, `
+              + `$${hex(l.tile_offset)}, `
+              + `$${hex(xPos)}`
+              + `\t; ${l.comment ?? l.letter.toUpperCase()}`,
+            width: l.width,
+            invalid: false,
+            comment: l.comment
+          };
+        }
+        return {
+          mapping: `\t\t; ${char.toUpperCase()} ${
+            /^[A-Z]$/i.test(char)
+              ? "does not exist in the Sonic 1 font"
+              : "is an invalid character"
+            }`,
+          width: DEFAULTS.width,
+          invalid: true
+        };
+      }
+
+      function getLetter(ch) {
+        const l = LETTERS[ch.toUpperCase()];
+        if (!l) {
+          return null; 
+        }
+        const sprite_format = l.sprite_format ?? DEFAULTS.sprite_format;
+        const sprite_format_sub = l.sprite_format_sub ?? DEFAULTS.sprite_format_sub;
+        const w = l.width ?? DEFAULTS.width;
+        return {
+          letter: ch,
+          width: w,
+          sprite_format: sprite_format,
+          sprite_format_sub: sprite_format_sub,
+          tile_offset: l.tile_offset,
+          y_delta: l.y_delta,
+          comment: l.comment
+        };
+      }
+      
+      function measureTextWidth(text) {
+        let w = 0;
+        for (const ch of text) {
+          if (ch === " ") {
+            w += SPACE_WIDTH;
+          } else {
+            const l = getLetter(ch);
+            w += l ? l.width : DEFAULTS.width;
+          }
+        }
+        return w & 0xFFFF;
+      }
+
+      ////////////////////
+      // ConData generator
+      
+      function buildConData(title, textWidth, offset = 0, noAct = false) {
+        const noActAdjust = (noAct ? 0x10 : 0);
+
+        const widthHalf = Math.floor(textWidth / 2.0);
+        
+        const NAME_start = 0x0000;
+        const NAME_target = 0x0120;
+
+        const ZONE_target = (0x00F0 + widthHalf + noActAdjust + offset) & 0xFFFF;
+        const ZONE_start = (ZONE_target - 0x0240 + noActAdjust) & 0xFFFF;
+
+        const OVAL_target = (ZONE_target + 0x0018 - noActAdjust) & 0xFFFF;
+        const OVAL_start = (OVAL_target + 0x00C0 - noActAdjust) & 0xFFFF;
+
+        const ACT_target = noAct ? 0x03EC : OVAL_target;
+        const ACT_start  = noAct ? 0x03EC : (ACT_target + 0x02C0) & 0xFFFF;
+
+        return `\t\tdc.w `
+          + `$${hex16(NAME_start)},$${hex16(NAME_target)}, `
+          + `$${hex16(ZONE_start)},$${hex16(ZONE_target)}, `
+          + `$${hex16(ACT_start)},$${hex16(ACT_target)}, `
+          + `$${hex16(OVAL_start)},$${hex16(OVAL_target)}`
+          + `\t; ${title.toUpperCase()}${noAct ? " (hide Act)" : ""}`;
+      }
+
+      ////////////////////
+      // Helpers
+
+      function parseHex(str, fallback) {
+        const cleaned = (str || "").trim().replace(/^\$/, "");
+        if (!cleaned) {
+          return fallback;
+        }
+        const n = parseInt(cleaned, 16);
+        return Number.isFinite(n) ? (n & 0xFF) : fallback;
+      }
+
+      function hex(n) {
+        return (n & 0xFF).toString(16).toUpperCase().padStart(2, "0");
+      }
+      
+      function hex16(n) {
+        return (n & 0xFFFF).toString(16).toUpperCase().padStart(4, "0");
+      }
+      
+      function pluralize(num) {
+        return num === 1 ? "" : "s";
+      }
+      
+      ////////////////////
+      // Clipboard
+      
+      function copyToClipboard(el, out) {
+        if ($("#text-in").value.length == 0) {
+          alert("Type something first, you doofus.");
+          return;
+        }
+        out.focus();
+        out.select();
+        document.execCommand("copy");
+        el.value = "Copied!";
+      }
+          
+      function resetClipboardButtons() {
+        resetClipboardButton(clipboard, "Copy to clipboard");
+        resetClipboardButton(clipboardCon, "Copy ConData (with Act)");
+        resetClipboardButton(clipboardConNoAct, "Copy ConData (hide Act)");
+      }
+
+      function resetClipboardButton(el, val) {
+        el.value = val;
+      }
+    });
+  </script>
+  
+  <style type="text/css">
     :root {
       --bg: #161821;
       --panel: #1f2330;
@@ -233,7 +531,6 @@
       color: var(--muted);
     }
     
-    
     @media only screen and (max-aspect-ratio: 3/2) {
       h1 {
         flex-direction: column;
@@ -251,7 +548,6 @@
       <h1><span class="titlecard">Sonic Text Code Generator</span> <span class="small" style="width:0">Mk.&nbsp;II</span></h1>
       <p class="small">A quick and simple way to generate zone title card mappings for Sonic 1 &mdash; created by Selbi</p>
     </header>
-
     <div class="panel">
       <div class="grid">
         <div style="grid-column: 1 / -1;">
@@ -259,27 +555,22 @@
           <input id="text-in" type="text" autocomplete="off" autofocus placeholder="Type a zone name..." maxlength="32">
           <div class="hint">Warning: The letters <span class="titlecard" style="font-size:80%">JQVWX</span> are unsupported.</div>
         </div>
-
         <div>
           <label for="x-pos">Start X-coordinate (hex):</label>
           <input id="x-pos" type="text" autocomplete="off" placeholder="Auto" maxlength="2">
           <div class="hint">Empty = automatically center</div>
         </div>
-
         <div>
           <label for="y-pos">Fixed Y-coordinate (hex):</label>
           <input id="y-pos" type="text" autocomplete="off" placeholder="Auto" maxlength="2">
           <div class="hint">Empty = defaults to $F8</div>
         </div>
-        
         <div id="status-wrap">
           <span class="badge" id="status">Ready to generate</span>
           <span class="small" id="summary"></span>
         </div>
       </div>
-
       <hr>
-      
       <div class="out">
         <label for="text-out">MapData &mdash; the per-letter sprite mappings:</label>
         <textarea readonly id="text-out" placeholder="(Output is generated here)" autocomplete="off"></textarea>
@@ -287,9 +578,7 @@
           <input id="clipboard" type="button" value="Copy to clipboard">
         </div>
       </div>
-      
       <hr>
-      
       <div>
         <div id="condata-wrap">
           <label for="condata-out">ConData &mdash; used for positioning the name, "ZONE", Act number, and Oval:</label>
@@ -302,9 +591,7 @@
           </div>
         </div>
       </div>
-      
       <hr>
-      
       <div class="row" id="location-guide">
         <dl>
           <label>GitHub disassembly:</label>
@@ -327,289 +614,5 @@
       </div>
     </div>
   </div>
-
-  <script>
-    const $ = sel => document.querySelector(sel);
-
-    const SPACE_WIDTH = 16;
-    const DEFAULTS = {
-      width: 16,
-      sprite_format: 5,
-      sprite_format_sub: 0
-    };
-
-    const def = (tile_offset, width = DEFAULTS.width, sprite_format = DEFAULTS.sprite_format, sprite_format_sub = DEFAULTS.sprite_format_sub, y_delta = 0) =>
-      ({ tile_offset, width, sprite_format, sprite_format_sub, y_delta});
-
-    // Letter defs (tile_offset, width, sprite_format, sprite_format_sub, y_delta)
-    const LETTERS = {
-      A: def(0x00),
-      B: def(0x04),
-      C: def(0x08),
-      D: def(0x0C),
-      E: def(0x10),
-      F: def(0x14),
-      G: def(0x18),
-      H: def(0x1C),
-      I: def(0x20, 8, 1), // I is half-width
-      // (J is unsupported)
-      K: def(0x22),
-      L: def(0x26),
-      M: def(0x2A, 17), // M is one pixel wider
-      N: def(0x2E),
-      O: def(0x32),
-      P: def(0x36),
-      // (Q is unsupported)
-      R: def(0x3A),
-      S: def(0x3E),
-      T: def(0x42),
-      U: def(0x46),
-      // (V is unsupported)
-      //W: def(0x2A, 18, 5, 0x18, 1), // W is unsupported, though a dirty workaround is rotating an M by 180 degrees like so
-      // (X is unsupported)
-      Y: def(0x4A),
-      Z: def(0x4E)
-    };
-
-    const inputText = $("#text-in");
-    const inputX = $("#x-pos");
-    const inputY = $("#y-pos");
-    const out = $("#text-out");
-    const status = $("#status");
-    const summary = $("#summary");
-    const condataOut = $("#condata-out");
-    const condataOutNoAct = $("#condata-out-noact");
-
-    const clipboard = $("#clipboard");
-    const clipboardCon = $("#clipboard-condata-out");
-    const clipboardConNoAct = $("#clipboard-condata-out-noact");
-    clipboard.onclick = () => copyToClipboard(clipboard, out);
-    clipboardCon.onclick = () => copyToClipboard(clipboardCon, condataOut);
-    clipboardConNoAct.onclick = () => copyToClipboard(clipboardConNoAct, condataOutNoAct);
-
-    [inputText, inputX, inputY].forEach(el => el.addEventListener("input", generateOutput));
-    generateOutput();
-
-    function generateOutput() {
-      resetClipboardButtons();
-
-      const text = (inputText.value || "");
-      const yPos = parseHex(inputY.value, 0xF8);
-
-      const isAuto = (inputX.value.trim() === "" && text);
-      const xStartAuto = autoCalcXStartRight(text);
-      const xStartManual = parseHex(inputX.value, 0x80);
-      
-      let xPos = isAuto ? xStartAuto : xStartManual;
-      let title = "";
-      let spriteCount = 0;
-      let invalidCount = 0;
-      let overflow = false;
-      const lines = [];
-
-      // Generate sprite mapping for each char
-      for (const ch of text) {
-        const piece = createLetterPiece(ch, yPos, xPos);
-        lines.push(piece.mapDcb);
-        if (!piece.invalid) {
-          title += ch;
-          if (piece.mapDcb) {
-            spriteCount++;
-          }
-        }
-
-        if (xPos < 0x80 && ((xPos + piece.width) & 0xFF) >= 0x80) {
-          overflow = true;
-        }  
-
-        xPos = (xPos + piece.width) & 0xFF;
-        if (piece.invalid) {
-          invalidCount++;
-        }
-      }
-      
-      // Compile and output mappings
-      let output = "";
-      if (lines.length) {
-        lines.unshift(`\tdc.b ${spriteCount}\t; ${title.toUpperCase()}`);
-        lines.push(`\t\teven`);
-        output = lines.join("\n");
-      }
-      out.textContent = output;
-
-      // Generate ConData
-      if (text) {
-        const w = measureTextWidth(text);
-        const offset = isAuto ? 0 : (xStartManual - xStartAuto);
-        
-        const conDataLine = buildConData(title, w, offset);
-        $("#condata-out").value = conDataLine;
-        
-        const conDataLineNoAct = buildConData(title, w, offset, true);
-        $("#condata-out-noact").value = conDataLineNoAct;
-      } else {
-        $("#condata-out").value = "";
-        $("#condata-out-noact").value = "";
-      }
-
-      // Update status
-      const setStatus = (message, summaryText = "", isError = false) => {
-        status.textContent = message;
-        status.classList.toggle("error", isError);
-        summary.textContent = summaryText;
-      };
-      if (!text) {
-        setStatus('Ready to generate');
-      } else if (overflow) {
-        setStatus('Generated with errors', 'Text overflow, pick a shorter name!', true);
-      } else if (invalidCount > 0) {
-        setStatus('Generated with warnings', `(${invalidCount} unsupported char${plural(invalidCount)})`, true);
-      } else {
-        setStatus('Generated', `(${spriteCount} sprite mapping${plural(spriteCount)})`);
-      }
-    }
-
-    function createLetterPiece(char, yPos, xPos) {
-      if (char === " ") {
-        return {
-          mapDcb: "",
-          width: SPACE_WIDTH,
-          invalid: false
-        };
-      }
-
-      const l = getLetter(char);
-      if (l) {
-        return {
-          mapDcb: `\t\tdc.b $${hex(yPos - l.y_delta)}, $${hex(l.sprite_format)}, $${hex(l.sprite_format_sub)}, $${hex(l.tile_offset)}, $${hex(xPos)}\t; ${l.letter.toUpperCase()}`,
-          width: l.width,
-          invalid: false
-        };
-      }
-      return {
-        mapDcb: `\t\t; ${char.toUpperCase()} ${
-          /^[A-Z]$/i.test(char)
-            ? "does not exist in the Sonic 1 font"
-            : "is an invalid character"
-          }`,
-        width: DEFAULTS.width,
-        invalid: true
-      };
-    }
-
-    function getLetter(ch) {
-      const l = LETTERS[ch.toUpperCase()];
-      if (!l) {
-        return null; 
-      }
-      const sprite_format = l.sprite_format ?? DEFAULTS.sprite_format;
-      const sprite_format_sub = l.sprite_format_sub ?? DEFAULTS.sprite_format_sub;
-      const w = l.width ?? DEFAULTS.width;
-      const tile_offset = l.tile_offset;
-      const y_delta = l.y_delta;
-      return {
-        letter: ch,
-        width: w,
-        sprite_format: sprite_format,
-        sprite_format_sub: sprite_format_sub,
-        tile_offset: tile_offset,
-        y_delta: y_delta
-      };
-    }
-    
-    function measureTextWidth(text) {
-      let w = 0;
-      for (const ch of text) {
-        if (ch === " ") {
-          w += SPACE_WIDTH;
-        } else {
-          const l = getLetter(ch);
-          w += l ? l.width : DEFAULTS.width;
-        }
-      }
-      return w & 0xFFFF;
-    }
-
-    function autoCalcXStartRight(text) {
-      const width = measureTextWidth(text);
-      const startX = (Math.floor(-width / 2.0)) & 0xFF;
-      return (startX > 0x80) ? startX : 0x80;
-    }
-    
-    ////////////////////
-    // ConData
-    
-    function buildConData(title, textWidth, offset = 0, noAct = false) {
-      const noActAdjust = (noAct ? 0x10 : 0);
-
-      const widthHalf = Math.floor(textWidth / 2.0);
-      
-      const NAME_start  = 0x0000;
-      const NAME_target = 0x0120;
-
-      const ZONE_target = (0x00F0 + widthHalf + noActAdjust + offset) & 0xFFFF;
-      const ZONE_start  = (ZONE_target - 0x0240 + noActAdjust) & 0xFFFF;
-
-      const OVAL_target = (ZONE_target + 0x0018 - noActAdjust) & 0xFFFF;
-      const OVAL_start  = (OVAL_target + 0x00C0 - noActAdjust) & 0xFFFF;
-
-      const ACT_target  = noAct ? 0x03EC : OVAL_target;
-      const ACT_start   = noAct ? 0x03EC : (ACT_target + 0x02C0) & 0xFFFF;
-
-      return `\t\tdc.w $${hex16(NAME_start)},$${hex16(NAME_target)}, `
-      + `$${hex16(ZONE_start)},$${hex16(ZONE_target)}, `
-      + `$${hex16(ACT_start)},$${hex16(ACT_target)}, `
-      + `$${hex16(OVAL_start)},$${hex16(OVAL_target)}`
-      + `\t; ${title.toUpperCase()}${noAct ? " (hide Act)" : ""}`;
-    }
-
-    ////////////////////
-    // Helpers
-
-    function parseHex(str, fallback) {
-      const cleaned = (str || "").trim().replace(/^\$/, "");
-      if (!cleaned) {
-        return fallback;
-      }
-      const n = parseInt(cleaned, 16);
-      return Number.isFinite(n) ? (n & 0xFF) : fallback;
-    }
-
-    function hex(n) {
-      return (n & 0xFF).toString(16).toUpperCase().padStart(2, "0");
-    }
-    
-    function hex16(n) {
-      return (n & 0xFFFF).toString(16).toUpperCase().padStart(4, "0");
-    }
-    
-    function plural(num) {
-      return num === 1 ? "" : "s";
-    }
-    
-    ////////////////////
-    // Copy to clipboard
-    
-    function copyToClipboard(el, out) {
-      if ($("#text-in").value.length == 0) {
-        alert("Type something first, you doofus.");
-        return;
-      }
-      out.focus();
-      out.select();
-      document.execCommand("copy");
-      el.value = "Copied!";
-    }
-        
-    function resetClipboardButtons() {
-      resetClipboardButton(clipboard, "Copy to clipboard");
-      resetClipboardButton(clipboardCon, "Copy ConData (with Act)");
-      resetClipboardButton(clipboardConNoAct, "Copy ConData (hide Act)");
-    }
-
-    function resetClipboardButton(el, val) {
-      el.value = val;
-    }
-  </script>
 </body>
 </html>
