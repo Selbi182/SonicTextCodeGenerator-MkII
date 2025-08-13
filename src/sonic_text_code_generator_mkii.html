@@ -69,12 +69,6 @@
       justify-content: center;
     }
 
-    p.sprite_format_sub {
-      margin: 0 0 16px;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
     .panel {
       background: var(--panel);
       border: 1px solid #2b3246;
@@ -195,10 +189,12 @@
       max-width: 100%;
       resize: vertical;
       color: var(--text);
+      tab-size: 8;
     }
 
     #condata-wrap .grid {
       gap: 8px 0;
+      tab-size: 1;
     }
 
     #condata-wrap input[type="text"] {
@@ -208,6 +204,20 @@
       font-size: 13px;
     }
 
+    #location-guide {
+      align-items: center;
+      justify-content: space-around;
+      width: 100%;
+    }
+
+    #location-guide dd {
+      margin: 0
+    }
+    
+    #location-guide dl {
+      margin: 0;
+    }
+    
     .badge {
       display: inline-block;
       font-family: var(--mono);
@@ -222,13 +232,24 @@
       font-size: 12px;
       color: var(--muted);
     }
+    
+    
+    @media only screen and (max-aspect-ratio: 3/2) {
+      h1 {
+        flex-direction: column;
+      }
+      
+      h1 .small {
+        width: auto !important;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
       <h1><span class="titlecard">Sonic Text Code Generator</span> <span class="small" style="width:0">Mk.&nbsp;II</span></h1>
-      <p class="small">A quick and simple way to generate zone title card mappings for Sonic 1 — created by Selbi</p>
+      <p class="small">A quick and simple way to generate zone title card mappings for Sonic 1 &mdash; created by Selbi</p>
     </header>
 
     <div class="panel">
@@ -257,7 +278,10 @@
         </div>
       </div>
 
+      <hr>
+      
       <div class="out">
+        <label for="text-out">MapData &mdash; the per-letter sprite mappings:</label>
         <textarea readonly id="text-out" placeholder="(Output is generated here)" autocomplete="off"></textarea>
         <div>
           <input id="clipboard" type="button" value="Copy to clipboard">
@@ -281,22 +305,25 @@
       
       <hr>
       
-      <div class="row">
-        <span class="small"><strong>Where to paste the output:</strong><br>
-          <ul style="margin-bottom:0;">
-            <li><strong>Main:</strong></li>
-            <ul>
-              <li><span class="badge">GitHub</span> sonic.asm &rarr; Map_Card</li>
-              <li><span class="badge">Hivebrain 2005</span> sonic1.asm &rarr; Map_obj34</li>
-            </ul>
-            
-            <li><strong>ConData:</strong></li>
-            <ul>
-              <li><span class="badge">GitHub</span> _incObj &rarr; 34 Title Cards.asm &rarr; Card_ConData</li>
-              <li><span class="badge">Hivebrain 2005</span> sonic1.asm &rarr; Obj34_ConData</li>
-            </ul>
-          </ul>
-        </span>
+      <div class="row" id="location-guide">
+        <dl>
+          <label>GitHub disassembly:</label>
+          <dd>
+            <span class="badge">MapData</span> sonic.asm &rarr; <code>Map_Card</code>
+          </dd>
+          <dd>
+            <span class="badge">ConData</span> _incObj &rarr; 34 Title Cards.asm &rarr; <code>Card_ConData</code>
+          </dd>
+        </dl>
+        <dl>        
+          <label>Hivebrain 2005 disassembly:</label>
+          <dd>
+            <span class="badge">MapData</span> sonic1.asm &rarr; <code>Map_obj34</code>
+          </dd>
+          <dd>
+            <span class="badge">ConData</span> sonic1.asm &rarr; <code>Obj34_ConData</code>
+          </dd>
+        </dl>
       </div>
     </div>
   </div>
@@ -304,16 +331,17 @@
   <script>
     const $ = sel => document.querySelector(sel);
 
+    const SPACE_WIDTH = 16;
     const DEFAULTS = {
       width: 16,
       sprite_format: 5,
       sprite_format_sub: 0
     };
 
-    const def = (tile_offset, width = DEFAULTS.width, sprite_format = DEFAULTS.sprite_format, sprite_format_sub = DEFAULTS.sprite_format_sub) =>
-      ({ tile_offset, width, sprite_format, sprite_format_sub });
+    const def = (tile_offset, width = DEFAULTS.width, sprite_format = DEFAULTS.sprite_format, sprite_format_sub = DEFAULTS.sprite_format_sub, y_delta = 0) =>
+      ({ tile_offset, width, sprite_format, sprite_format_sub, y_delta});
 
-    // Letter defs (tile_offset, width, sprite_format, sprite_format_sub)
+    // Letter defs (tile_offset, width, sprite_format, sprite_format_sub, y_delta)
     const LETTERS = {
       A: def(0x00),
       B: def(0x04),
@@ -324,21 +352,21 @@
       G: def(0x18),
       H: def(0x1C),
       I: def(0x20, 8, 1), // I is half-width
-      // J is unsupported
+      // (J is unsupported)
       K: def(0x22),
       L: def(0x26),
       M: def(0x2A, 17), // M is one pixel wider
       N: def(0x2E),
       O: def(0x32),
       P: def(0x36),
-      // Q is unsupported
+      // (Q is unsupported)
       R: def(0x3A),
       S: def(0x3E),
       T: def(0x42),
       U: def(0x46),
-      // V is unsupported
-      // W is unsupported
-      // X is unsupported
+      // (V is unsupported)
+      //W: def(0x2A, 18, 5, 0x18, 1), // W is unsupported, though a dirty workaround is rotating an M by 180 degrees like so
+      // (X is unsupported)
       Y: def(0x4A),
       Z: def(0x4E)
     };
@@ -385,7 +413,9 @@
         lines.push(piece.mapDcb);
         if (!piece.invalid) {
           title += ch;
-          if (piece.mapDcb) spriteCount++;
+          if (piece.mapDcb) {
+            spriteCount++;
+          }
         }
 
         if (xPos < 0x80 && ((xPos + piece.width) & 0xFF) >= 0x80) {
@@ -401,7 +431,7 @@
       // Compile and output mappings
       let output = "";
       if (lines.length) {
-        lines.unshift(`\tdc.b\t${spriteCount}\t; ${title.toUpperCase()}`);
+        lines.unshift(`\tdc.b ${spriteCount}\t; ${title.toUpperCase()}`);
         lines.push(`\t\teven`);
         output = lines.join("\n");
       }
@@ -423,36 +453,35 @@
       }
 
       // Update status
+      const setStatus = (message, summaryText = "", isError = false) => {
+        status.textContent = message;
+        status.classList.toggle("error", isError);
+        summary.textContent = summaryText;
+      };
       if (!text) {
-        status.textContent = "Ready to generate";
-        status.classList.remove("error");
-        summary.textContent = "";
+        setStatus('Ready to generate');
       } else if (overflow) {
-        status.textContent = "Generated with errors";
-        status.classList.add("error");
-        summary.textContent = "Text overflow, pick a shorter name!";
+        setStatus('Generated with errors', 'Text overflow, pick a shorter name!', true);
       } else if (invalidCount > 0) {
-        status.textContent = "Generated with warnings";
-        status.classList.add("error");
-        summary.textContent = `(${invalidCount} unsupported char${plural(invalidCount)})`;
+        setStatus('Generated with warnings', `(${invalidCount} unsupported char${plural(invalidCount)})`, true);
       } else {
-        status.textContent = "Generated";
-        status.classList.remove("error");
-        summary.textContent = `(${lines.length - 2} sprite mapping${plural(lines.length - 2)})`;
+        setStatus('Generated', `(${spriteCount} sprite mapping${plural(spriteCount)})`);
       }
     }
 
     function createLetterPiece(char, yPos, xPos) {
-      if (char === " ") return {
-        mapDcb: "",
-        width: 0x10,
-        invalid: false
-      };
+      if (char === " ") {
+        return {
+          mapDcb: "",
+          width: SPACE_WIDTH,
+          invalid: false
+        };
+      }
 
       const l = getLetter(char);
       if (l) {
         return {
-          mapDcb: `\t\tdc.b\t$${hex(yPos)}, ${l.mapping}, $${hex(xPos)}\t\t; ${l.letter.toUpperCase()}`,
+          mapDcb: `\t\tdc.b $${hex(yPos - l.y_delta)}, $${hex(l.sprite_format)}, $${hex(l.sprite_format_sub)}, $${hex(l.tile_offset)}, $${hex(xPos)}\t; ${l.letter.toUpperCase()}`,
           width: l.width,
           invalid: false
         };
@@ -477,10 +506,14 @@
       const sprite_format_sub = l.sprite_format_sub ?? DEFAULTS.sprite_format_sub;
       const w = l.width ?? DEFAULTS.width;
       const tile_offset = l.tile_offset;
+      const y_delta = l.y_delta;
       return {
         letter: ch,
         width: w,
-        mapping: `${sprite_format}, ${sprite_format_sub}, $${hex(tile_offset)}`
+        sprite_format: sprite_format,
+        sprite_format_sub: sprite_format_sub,
+        tile_offset: tile_offset,
+        y_delta: y_delta
       };
     }
     
@@ -488,7 +521,7 @@
       let w = 0;
       for (const ch of text) {
         if (ch === " ") {
-          w += 0x10;
+          w += SPACE_WIDTH;
         } else {
           const l = getLetter(ch);
           w += l ? l.width : DEFAULTS.width;
@@ -523,7 +556,7 @@
       const ACT_target  = noAct ? 0x03EC : OVAL_target;
       const ACT_start   = noAct ? 0x03EC : (ACT_target + 0x02C0) & 0xFFFF;
 
-      return `dc.w\t$${hex16(NAME_start)},$${hex16(NAME_target)}, `
+      return `\t\tdc.w $${hex16(NAME_start)},$${hex16(NAME_target)}, `
       + `$${hex16(ZONE_start)},$${hex16(ZONE_target)}, `
       + `$${hex16(ACT_start)},$${hex16(ACT_target)}, `
       + `$${hex16(OVAL_start)},$${hex16(OVAL_target)}`
