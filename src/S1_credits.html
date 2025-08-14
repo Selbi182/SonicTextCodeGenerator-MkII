@@ -293,11 +293,19 @@
       --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
       --sans: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
       --titlecard: "Sonic1TitleCards", sans-serif;
+      --credits: "Sonic1Credits", sans-serif;
     }
 
     @font-face {
       font-family: "Sonic1TitleCards";
       src: url('sonic-1-title-card.otf.woff2') format('woff2');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    @font-face {
+      font-family: "Sonic1Credits";
+      src: url('sonic-1-credits.otf.woff2') format('woff2');
       font-weight: normal;
       font-style: normal;
     }
@@ -315,6 +323,10 @@
     
     .titlecard {
       font-family: var(--titlecard);
+    }
+    
+    .credits {
+      font-family: var(--credits);
     }
 
     * {
@@ -358,6 +370,13 @@
       gap: 12px;
       justify-content: center;
       text-wrap: balance;
+      text-transform: uppercase;
+    }
+
+    #change-generator {
+      text-align: left;
+      width: fit-content;
+      margin: auto;
     }
 
     .panel {
@@ -386,7 +405,7 @@
 
     #text-in {
       font-size: 150%;
-      font-family: var(--titlecard);
+      font-family: var(--credits);
       text-align: center;
       width: 100%;
       background: #121523;
@@ -562,9 +581,14 @@
 <body>
   <div class="wrap">
     <header>
-      <h1><span class="titlecard">Sonic Text Code Generator</span> <span class="small" style="width:0">Mk.&nbsp;II</span></h1>
-      <div>
-        <strong>Sonic 1:</strong> <a href="/S1_titlecards.html">Zone Title Cards</a> &mdash; <u>Credits</u>
+      <h1><span class="credits">Sonic Text Code Generator</span> <span class="small" style="width:0">Mk.&nbsp;II</span></h1>
+      <div id="change-generator">
+        <div>
+          <span class="badge">Sonic 1</span> <a href="S1_titlecards.html">Zone Title Cards</a> &mdash; <strong>Credits</strong>
+        </div>
+        <div>
+          <span class="badge">Sonic 2</span> <span>Zone Title Cards (soon)</span> &mdash; <span>Credits (soon)</span>
+        </div>
       </div>
     </header>
     <div class="panel">
@@ -572,7 +596,7 @@
         <div style="grid-column: 1 / -1;">
           <label for="text-in">Input text:</label>
           <textarea id="text-in" type="text" autocomplete="off" autofocus placeholder="Type your credits..." maxlength="120"></textarea>
-          <div class="hint">Warning: The letters <span class="titlecard" style="font-size:80%">QVWZ</span> are unsupported. Leave blank lines between entries for best results.</div>
+          <div class="hint">Warning: The letters <span class="credits">QVWZ</span> are unsupported. Leave blank lines between entries for best results.</div>
         </div>
         <div>
           <label for="x-pos">Start X-coordinate (hex):</label>
