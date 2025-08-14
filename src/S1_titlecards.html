@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sonic Text Code Generator - Mk. II</title>
+  <link rel="icon" href="favicon.png" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=0.8">
+  <script type="text/javascript">    
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // Convenience selector
+      const $ = sel => document.querySelector(sel);
+
+      // Define defaults
+      const DEFAULTS = {
+        width: 16,
+        sprite_format: 5,
+        sprite_format_sub: 0
+      };
+      const SPACE_WIDTH = DEFAULTS.width;
+
+      // Letter mapping definitions
+      // (tile_offset, width, sprite_format, sprite_format_sub, y_delta, comment)
+      const letter = (tile_offset, width = DEFAULTS.width, sprite_format = DEFAULTS.sprite_format, sprite_format_sub = DEFAULTS.sprite_format_sub, y_delta = 0, comment = null) =>
+            ({ tile_offset, width, sprite_format, sprite_format_sub, y_delta, comment });
+      const LETTERS = {
+        A: letter(0x00),
+        B: letter(0x04),
+        C: letter(0x08),
+        D: letter(0x0C),
+        E: letter(0x10),
+        F: letter(0x14),
+        G: letter(0x18),
+        H: letter(0x1C),
+        I: letter(0x20, 8, 1), // I is half-width
+        // (J is unsupported)
+        K: letter(0x22),
+        L: letter(0x26),
+        M: letter(0x2A, 17), // M is one pixel wider
+        N: letter(0x2E),
+        O: letter(0x32),
+        P: letter(0x36),
+        // (Q is unsupported)
+        R: letter(0x3A),
+        S: letter(0x3E),
+        T: letter(0x42),
+        U: letter(0x46),
+        // (V is unsupported)
+        W: letter(0x2A, 18, 5, 0x10, 1, "W (unsupported, this is a rotated M as dirty workaround)"),
+        // (X is unsupported)
+        Y: letter(0x4A),
+        Z: letter(0x4E)
+      };
+
+      // Select relevant DOM elements
+      const inputText = $("#text-in");
+      const inputX = $("#x-pos");
+      const inputY = $("#y-pos");
+      const out = $("#text-out");
+      const status = $("#status");
+      const summary = $("#summary");
+      const condataOut = $("#condata-out");
+      const condataOutNoAct = $("#condata-out-noact");
+
+      // Set up clipboard buttons
+      const clipboard = $("#clipboard");
+      const clipboardCon = $("#clipboard-condata-out");
+      const clipboardConNoAct = $("#clipboard-condata-out-noact");
+      clipboard.onclick = () => copyToClipboard(clipboard, out);
+      clipboardCon.onclick = () => copyToClipboard(clipboardCon, condataOut);
+      clipboardConNoAct.onclick = () => copyToClipboard(clipboardConNoAct, condataOutNoAct);
+
+      // Register input event listeners
+      [inputText, inputX, inputY].forEach(el => el.addEventListener("input", generateOutput));
+      generateOutput();
+
+      ////////////////////
+      // Main generator
+      
+      function generateOutput() {
+        
+        // Fetch input data
+        const text = (inputText.value || "");
+        const yPos = parseHex(inputY.value, 0xF8);
+        const isAutoX = (inputX.value.trim() === "" && text);
+        const xStartAuto = Math.max(0x80, (Math.floor(-measureTextWidth(text) / 2.0)) & 0xFF);
+        const xStartManual = parseHex(inputX.value, 0x80);
+
+        // Initialize output data
+        let xPos = isAutoX ? xStartAuto : xStartManual;
+        let title = "";
+        let spriteCount = 0;
+        let invalidCount = 0;
+        let overflow = false;
+        let lines = [];
+
+        // Generate sprite mapping for each char
+        for (const ch of text) {
+          const piece = createLetterPiece(ch, yPos, xPos);
+          lines.push(piece.mapping);
+          if (!piece.invalid) {
+            title += ch;
+            if (piece.mapping) {
+              spriteCount++;
+            }
+          }
+
+          if (xPos < 0x80 && ((xPos + piece.width) & 0xFF) >= 0x80) {
+            overflow = true;
+          }  
+
+          xPos = (xPos + piece.width) & 0xFF;
+          if (piece.invalid || !!piece.comment) {
+            invalidCount++;
+          }
+        }
+        
+        // Compile and output mappings
+        let output = "";
+        if (lines.length) {
+          lines.unshift(`\tdc.b ${spriteCount}\t; ${title.toUpperCase()}`);
+          lines.push(`\t\teven`);
+          output = lines.join("\n");
+        }
+        out.textContent = output;
+
+        // Generate ConData
+        if (text) {
+          const w = measureTextWidth(text);
+          const offset = isAutoX ? 0 : (xStartManual - xStartAuto);
+          
+          const conDataLine = buildConData(title, w, offset);
+          $("#condata-out").value = conDataLine;
+          
+          const conDataLineNoAct = buildConData(title, w, offset, true);
+          $("#condata-out-noact").value = conDataLineNoAct;
+        } else {
+          $("#condata-out").value = "";
+          $("#condata-out-noact").value = "";
+        }
+
+        // Update status
+        const setStatus = (message, summaryText = "", isError = false) => {
+          status.textContent = message;
+          status.classList.toggle("error", isError);
+          summary.textContent = summaryText;
+        };
+        if (!text) {
+          setStatus('Ready to generate');
+        } else if (overflow) {
+          setStatus('Generated with errors', 'Text overflow, pick a shorter name!', true);
+        } else if (invalidCount > 0) {
+          setStatus('Generated with warnings', `(${invalidCount} unsupported char${pluralize(invalidCount)})`, true);
+        } else {
+          setStatus('Generated', `(${spriteCount} sprite mapping${pluralize(spriteCount)})`);
+        }
+
+        resetClipboardButtons();
+      }
+
+      function createLetterPiece(char, yPos, xPos) {
+        if (char === " ") {
+          return {
+            mapping: "",
+            width: SPACE_WIDTH,
+            invalid: false
+          };
+        }
+
+        const l = getLetter(char);
+        if (l) {
+          return {
+            mapping: `\t\tdc.b `
+              + `$${hex(yPos - l.y_delta)}, `
+              + `$${hex(l.sprite_format)}, `
+              + `$${hex(l.sprite_format_sub)}, `
+              + `$${hex(l.tile_offset)}, `
+              + `$${hex(xPos)}`
+              + `\t; ${l.comment ?? l.letter.toUpperCase()}`,
+            width: l.width,
+            invalid: false,
+            comment: l.comment
+          };
+        }
+        return {
+          mapping: `\t\t; ${char.toUpperCase()} ${
+            /^[A-Z]$/i.test(char)
+              ? "does not exist in the Sonic 1 font"
+              : "is an invalid character"
+            }`,
+          width: DEFAULTS.width,
+          invalid: true
+        };
+      }
+
+      function getLetter(ch) {
+        const l = LETTERS[ch.toUpperCase()];
+        if (!l) {
+          return null; 
+        }
+        const sprite_format = l.sprite_format ?? DEFAULTS.sprite_format;
+        const sprite_format_sub = l.sprite_format_sub ?? DEFAULTS.sprite_format_sub;
+        const w = l.width ?? DEFAULTS.width;
+        return {
+          letter: ch,
+          width: w,
+          sprite_format: sprite_format,
+          sprite_format_sub: sprite_format_sub,
+          tile_offset: l.tile_offset,
+          y_delta: l.y_delta,
+          comment: l.comment
+        };
+      }
+      
+      function measureTextWidth(text) {
+        let w = 0;
+        for (const ch of text) {
+          if (ch === " ") {
+            w += SPACE_WIDTH;
+          } else {
+            const l = getLetter(ch);
+            w += l ? l.width : DEFAULTS.width;
+          }
+        }
+        return w & 0xFFFF;
+      }
+
+      ////////////////////
+      // ConData generator
+      
+      function buildConData(title, textWidth, offset = 0, noAct = false) {
+        const noActAdjust = (noAct ? 0x10 : 0);
+
+        const widthHalf = Math.floor(textWidth / 2.0);
+        
+        const NAME_start = 0x0000;
+        const NAME_target = 0x0120;
+
+        const ZONE_target = (0x00F0 + widthHalf + noActAdjust + offset) & 0xFFFF;
+        const ZONE_start = (ZONE_target - 0x0240 + noActAdjust) & 0xFFFF;
+
+        const OVAL_target = (ZONE_target + 0x0018 - noActAdjust) & 0xFFFF;
+        const OVAL_start = (OVAL_target + 0x00C0 - noActAdjust) & 0xFFFF;
+
+        const ACT_target = noAct ? 0x03EC : OVAL_target;
+        const ACT_start  = noAct ? 0x03EC : (ACT_target + 0x02C0) & 0xFFFF;
+
+        return `\t\tdc.w `
+          + `$${hex16(NAME_start)},$${hex16(NAME_target)}, `
+          + `$${hex16(ZONE_start)},$${hex16(ZONE_target)}, `
+          + `$${hex16(ACT_start)},$${hex16(ACT_target)}, `
+          + `$${hex16(OVAL_start)},$${hex16(OVAL_target)}`
+          + `\t; ${title.toUpperCase()}${noAct ? " (hide Act)" : ""}`;
+      }
+
+      ////////////////////
+      // Helpers
+
+      function parseHex(str, fallback) {
+        const cleaned = (str || "").trim().replace(/^\$/, "");
+        if (!cleaned) {
+          return fallback;
+        }
+        const n = parseInt(cleaned, 16);
+        return Number.isFinite(n) ? (n & 0xFF) : fallback;
+      }
+
+      function hex(n) {
+        return (n & 0xFF).toString(16).toUpperCase().padStart(2, "0");
+      }
+      
+      function hex16(n) {
+        return (n & 0xFFFF).toString(16).toUpperCase().padStart(4, "0");
+      }
+      
+      function pluralize(num) {
+        return num === 1 ? "" : "s";
+      }
+      
+      ////////////////////
+      // Clipboard
+      
+      function copyToClipboard(el, out) {
+        if ($("#text-in").value.length == 0) {
+          alert("Type something first, you doofus.");
+          return;
+        }
+        out.focus();
+        out.select();
+        document.execCommand("copy");
+        el.value = "Copied!";
+      }
+          
+      function resetClipboardButtons() {
+        resetClipboardButton(clipboard, "Copy to clipboard");
+        resetClipboardButton(clipboardCon, "Copy ConData (with Act)");
+        resetClipboardButton(clipboardConNoAct, "Copy ConData (hide Act)");
+      }
+
+      function resetClipboardButton(el, val) {
+        el.value = val;
+      }
+    });
+  </script>
+  
+  <style type="text/css">
+    :root {
+      --bg: #161821;
+      --panel: #1f2330;
+      --accent: #4ea1ff;
+      --text: #e6e9ef;
+      --muted: #9aa4b2;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
+      --titlecard: "Sonic1TitleCards", sans-serif;
+    }
+
+    @font-face {
+      font-family: "Sonic1TitleCards";
+      src: url('sonic-1-title-card.otf.woff2') format('woff2');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    footer a {
+      font-weight: bold;
+    }
+    a {
+      text-decoration: none;
+      color: var(--muted);
+    }
+    a:hover {
+      color: var(--accent);
+    }
+    
+    .titlecard {
+      font-family: var(--titlecard);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+    
+    hr {
+      margin: 16px 0;
+      opacity: 0.5;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow-x: hidden;
+      background: linear-gradient(180deg, #151826, #0f1120 40%);
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 900px;
+      margin: auto;
+      padding: 16px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 20px;
+      margin: 0 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      justify-content: center;
+      text-wrap: balance;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid #2b3246;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px 16px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 6px;
+      font-weight: bold;
+    }
+
+    #text-in {
+      font-size: 150%;
+      font-family: var(--titlecard);
+    }
+
+    #text-in,
+    #x-pos,
+    #y-pos {
+      text-transform: uppercase;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #2a3044;
+      background: #121523;
+      color: var(--text);
+      outline: none;
+      font-size: 14px;
+    }
+
+    input[type="text"]::placeholder {
+      color: #667;
+      text-transform: none;
+    }
+
+    input[type="button"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #2a3044;
+      background: #121523;
+      color: var(--text);
+      outline: none;
+      font-size: 14px;
+      opacity: 0.8;
+      cursor: pointer;
+    }
+
+    input[type="button"]:hover {
+      opacity: 1;
+    }
+    
+    input[type="checkbox"] {
+      width: 12px;
+      height: 12px;
+    }
+
+    #status-wrap {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    #status.error {
+      color: red;
+      font-weight: bold;
+    }
+    
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+      margin-left: 4px;
+      opacity: 0.65;
+    }
+
+    .out {
+      margin: 16px 0;
+    }
+
+    #text-out {
+      margin: 0;
+      padding: 14px 16px;
+      background: #0e1020;
+      border: 1px solid #2a3044;
+      border-radius: 10px;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre;
+      overflow: auto;
+      height: 200px;
+      min-width: 100%;
+      max-width: 100%;
+      resize: vertical;
+      color: var(--text);
+      tab-size: 8;
+    }
+
+    #condata-wrap .grid {
+      gap: 8px 0;
+      tab-size: 1;
+    }
+
+    #condata-wrap input[type="text"] {
+      grid-column: 1 / 3;
+      font-family: var(--mono);
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    #location-guide {
+      align-items: center;
+      justify-content: space-around;
+      width: 100%;
+    }
+
+    #location-guide dd {
+      margin: 0
+    }
+    
+    #location-guide dl {
+      margin: 0;
+    }
+    
+    .badge {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #2a3044;
+      color: var(--muted);
+    }
+
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    
+    footer {
+      text-align: center;
+      margin: 12px;
+    }
+    
+    @media only screen and (max-aspect-ratio: 3/2) {
+      h1 {
+        flex-direction: column;
+      }
+      
+      h1 .small {
+        width: auto !important;
+      }
+      
+      #text-in {
+        font-size: 100%;
+      }
+      
+      #location-guide {
+        justify-content: start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1><span class="titlecard">Sonic Text Code Generator</span> <span class="small" style="width:0">Mk.&nbsp;II</span></h1>
+      <div>
+        <strong>Sonic 1:</strong> <u>Zone Title Cards</u> &mdash; <a href="/S1_credits.html">Credits</a>
+      </div>
+    </header>
+    <div class="panel">
+      <div class="grid">
+        <div style="grid-column: 1 / -1;">
+          <label for="text-in">Input text:</label>
+          <input id="text-in" type="text" autocomplete="off" autofocus placeholder="Type a zone name..." maxlength="32">
+          <div class="hint">Warning: The letters <span class="titlecard" style="font-size:80%">JQVWX</span> are unsupported.</div>
+        </div>
+        <div>
+          <label for="x-pos">Start X-coordinate (hex):</label>
+          <input id="x-pos" type="text" autocomplete="off" placeholder="Auto" maxlength="2">
+          <div class="hint">Empty = automatically center</div>
+        </div>
+        <div>
+          <label for="y-pos">Fixed Y-coordinate (hex):</label>
+          <input id="y-pos" type="text" autocomplete="off" placeholder="Auto" maxlength="2">
+          <div class="hint">Empty = defaults to $F8</div>
+        </div>
+        <div id="status-wrap">
+          <span class="badge" id="status">Ready to generate</span>
+          <span class="small" id="summary"></span>
+        </div>
+      </div>
+      <hr>
+      <div class="out">
+        <label for="text-out">MapData &mdash; the per-letter sprite mappings:</label>
+        <textarea readonly id="text-out" placeholder="(Output is generated here)" autocomplete="off"></textarea>
+        <div>
+          <input id="clipboard" type="button" value="Copy to clipboard">
+        </div>
+      </div>
+      <hr>
+      <div>
+        <div id="condata-wrap">
+          <label for="condata-out">ConData &mdash; used for positioning the name, "ZONE", Act number, and Oval:</label>
+          <div class="grid">
+            <input type="text" readonly autocomplete="off" id="condata-out" placeholder="ConData is generated here">
+            <input id="clipboard-condata-out" type="button" value="Copy ConData (with Act)">
+            
+            <input type="text" readonly autocomplete="off" id="condata-out-noact" placeholder="ConData is generated here (hide Act, for Final Zone)">
+            <input id="clipboard-condata-out-noact" type="button" value="Copy ConData (hide Act)">
+          </div>
+        </div>
+      </div>
+      <hr>
+      <div class="row" id="location-guide">
+        <dl>
+          <label>GitHub disassembly:</label>
+          <dd>
+            <span class="badge">MapData</span> sonic.asm &rarr; <code>Map_Card</code>
+          </dd>
+          <dd>
+            <span class="badge">ConData</span> _incObj &rarr; 34 Title Cards.asm &rarr; <code>Card_ConData</code>
+          </dd>
+        </dl>
+        <dl>        
+          <label>Hivebrain 2005 disassembly:</label>
+          <dd>
+            <span class="badge">MapData</span> sonic1.asm &rarr; <code>Map_obj34</code>
+          </dd>
+          <dd>
+            <span class="badge">ConData</span> sonic1.asm &rarr; <code>Obj34_ConData</code>
+          </dd>
+        </dl>
+      </div>
+    </div>
+    <footer class="small">
+      <a href="https://github.com/Selbi182/SonicTextCodeGenerator-MkII">Source Code</a> &mdash; Created by <a href="https://selbi.club">Selbi</a>
+    </footer>
+  </div>
+</body>
+</html>

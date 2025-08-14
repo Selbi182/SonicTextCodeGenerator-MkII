@@ -20,36 +20,37 @@
       const SPACE_WIDTH = DEFAULTS.width;
 
       // Letter mapping definitions
-      // (tile_offset, width, sprite_format, sprite_format_sub, y_delta, comment)
-      const letter = (tile_offset, width = DEFAULTS.width, sprite_format = DEFAULTS.sprite_format, sprite_format_sub = DEFAULTS.sprite_format_sub, y_delta = 0, comment = null) =>
-            ({ tile_offset, width, sprite_format, sprite_format_sub, y_delta, comment });
+      // (tile_offset, width, sprite_format, sprite_format_sub, x_delta, comment)
+      const letter = (tile_offset, width = DEFAULTS.width, sprite_format = DEFAULTS.sprite_format, sprite_format_sub = DEFAULTS.sprite_format_sub, x_delta = 0, comment = null) =>
+            ({ tile_offset, width, sprite_format, sprite_format_sub, x_delta, comment });
       const LETTERS = {
-        A: letter(0x00),
-        B: letter(0x04),
-        C: letter(0x08),
-        D: letter(0x0C),
-        E: letter(0x10),
-        F: letter(0x14),
-        G: letter(0x18),
-        H: letter(0x1C),
-        I: letter(0x20, 8, 1), // I is half-width
-        // (J is unsupported)
-        K: letter(0x22),
-        L: letter(0x26),
-        M: letter(0x2A, 17), // M is one pixel wider
-        N: letter(0x2E),
-        O: letter(0x32),
-        P: letter(0x36),
+        A: letter(0x04),
+        B: letter(0x48),
+        C: letter(0x1E),
+        D: letter(0x42),
+        E: letter(0x0E, 15),
+        F: letter(0x5C, 15),
+        G: letter(0x00),
+        H: letter(0x3A),
+        I: letter(0x46, 8, 1), // I is half-width
+        J: letter(0x4C, 15),
+        K: letter(0x58),
+        L: letter(0x16, 15),
+        M: letter(0x08, 20, 9), // M is one tile wider
+        N: letter(0x1A, 15),
+        O: letter(0x26),
+        P: letter(0x12, 15),
         // (Q is unsupported)
-        R: letter(0x3A),
-        S: letter(0x3E),
-        T: letter(0x42),
-        U: letter(0x46),
+        R: letter(0x22),
+        S: letter(0x2E, 14),
+        T: letter(0x3E),
+        U: letter(0x32),
         // (V is unsupported)
-        W: letter(0x2A, 18, 5, 0x10, 1, "W (unsupported, this is a rotated M as dirty workaround)"),
-        // (X is unsupported)
-        Y: letter(0x4A),
-        Z: letter(0x4E)
+        W: letter(0x08, 20, 9, 0x18, 4, "W (unsupported, this is a rotated M as workaround)"),
+        X: letter(0x50),
+        Y: letter(0x2A),
+        // (Z is unsupported)
+        2: letter(0x36, 15)
       };
 
       // Select relevant DOM elements
@@ -59,20 +60,18 @@
       const out = $("#text-out");
       const status = $("#status");
       const summary = $("#summary");
-      const condataOut = $("#condata-out");
-      const condataOutNoAct = $("#condata-out-noact");
 
       // Set up clipboard buttons
       const clipboard = $("#clipboard");
-      const clipboardCon = $("#clipboard-condata-out");
-      const clipboardConNoAct = $("#clipboard-condata-out-noact");
       clipboard.onclick = () => copyToClipboard(clipboard, out);
-      clipboardCon.onclick = () => copyToClipboard(clipboardCon, condataOut);
-      clipboardConNoAct.onclick = () => copyToClipboard(clipboardConNoAct, condataOutNoAct);
 
       // Register input event listeners
       [inputText, inputX, inputY].forEach(el => el.addEventListener("input", generateOutput));
       generateOutput();
+      
+      inputX.addEventListener("input", el => {
+        inputText.classList.toggle("left", !!el.target.value);
+      });
 
       ////////////////////
       // Main generator
@@ -81,13 +80,17 @@
         
         // Fetch input data
         const text = (inputText.value || "");
-        const yPos = parseHex(inputY.value, 0xF8);
+        
         const isAutoX = (inputX.value.trim() === "" && text);
-        const xStartAuto = Math.max(0x80, (Math.floor(-measureTextWidth(text) / 2.0)) & 0xFF);
         const xStartManual = parseHex(inputX.value, 0x80);
+        
+        const isAutoY = (inputY.value.trim() === "" && text);
+        const yStartAuto = Math.max(0x90, (Math.floor(-measureTextHeight(text) / 2.0)) & 0xFF);
+        const yStartManual = parseHex(inputY.value, 0xF8);
 
         // Initialize output data
-        let xPos = isAutoX ? xStartAuto : xStartManual;
+        let xPos = 0;
+        let yPos = isAutoY ? yStartAuto : yStartManual;
         let title = "";
         let spriteCount = 0;
         let invalidCount = 0;
@@ -95,23 +98,37 @@
         let lines = [];
 
         // Generate sprite mapping for each char
-        for (const ch of text) {
-          const piece = createLetterPiece(ch, yPos, xPos);
-          lines.push(piece.mapping);
-          if (!piece.invalid) {
-            title += ch;
-            if (piece.mapping) {
-              spriteCount++;
+        const inputLines = text.split("\n");
+        for (const [i, line] of inputLines.entries()) {
+          // Prepare next line
+          if (i > 0) {
+            yPos += 0x10;
+            if (lines.at(-1) !== "") {              
+              lines.push("");
+              title += " / ";
             }
           }
+          xPos = isAutoX ? Math.max(0x80, (Math.floor(-measureTextWidth(line) / 2.0)) & 0xFF) : xStartManual;
+          
+          // This line
+          for (const ch of line) {
+            const piece = createLetterPiece(ch, yPos, xPos);
+            lines.push(piece.mapping);
+            if (!piece.invalid) {
+              title += ch;
+              if (!piece.mapping.trim().startsWith(";")) {
+                spriteCount++;
+              }
+            }
 
-          if (xPos < 0x80 && ((xPos + piece.width) & 0xFF) >= 0x80) {
-            overflow = true;
-          }  
+            if (xPos < 0x80 && ((xPos + piece.width) & 0xFF) >= 0x80) {
+              overflow = true;
+            }  
 
-          xPos = (xPos + piece.width) & 0xFF;
-          if (piece.invalid || !!piece.comment) {
-            invalidCount++;
+            xPos = (xPos + piece.width) & 0xFF;
+            if (piece.invalid || !!piece.comment) {
+              invalidCount++;
+            }            
           }
         }
         
@@ -124,21 +141,6 @@
         }
         out.textContent = output;
 
-        // Generate ConData
-        if (text) {
-          const w = measureTextWidth(text);
-          const offset = isAutoX ? 0 : (xStartManual - xStartAuto);
-          
-          const conDataLine = buildConData(title, w, offset);
-          $("#condata-out").value = conDataLine;
-          
-          const conDataLineNoAct = buildConData(title, w, offset, true);
-          $("#condata-out-noact").value = conDataLineNoAct;
-        } else {
-          $("#condata-out").value = "";
-          $("#condata-out-noact").value = "";
-        }
-
         // Update status
         const setStatus = (message, summaryText = "", isError = false) => {
           status.textContent = message;
@@ -147,8 +149,12 @@
         };
         if (!text) {
           setStatus('Ready to generate');
+        } else if (spriteCount > 80) {
+          setStatus('Generated with errors', 'Sprite overflow! (max: 80)', true);
+        } else if (inputLines.length > 14) {
+          setStatus('Generated with errors', 'Too many lines! (max: 14)', true);
         } else if (overflow) {
-          setStatus('Generated with errors', 'Text overflow, pick a shorter name!', true);
+          setStatus('Generated with errors', 'At least one line is too long!', true);
         } else if (invalidCount > 0) {
           setStatus('Generated with warnings', `(${invalidCount} unsupported char${pluralize(invalidCount)})`, true);
         } else {
@@ -161,7 +167,7 @@
       function createLetterPiece(char, yPos, xPos) {
         if (char === " ") {
           return {
-            mapping: "",
+            mapping: "\t\t\t\t\t\t; space",
             width: SPACE_WIDTH,
             invalid: false
           };
@@ -171,11 +177,11 @@
         if (l) {
           return {
             mapping: `\t\tdc.b `
-              + `$${hex(yPos - l.y_delta)}, `
+              + `$${hex(yPos)}, `
               + `$${hex(l.sprite_format)}, `
               + `$${hex(l.sprite_format_sub)}, `
               + `$${hex(l.tile_offset)}, `
-              + `$${hex(xPos)}`
+              + `$${hex(xPos - l.x_delta)}`
               + `\t; ${l.comment ?? l.letter.toUpperCase()}`,
             width: l.width,
             invalid: false,
@@ -207,7 +213,7 @@
           sprite_format: sprite_format,
           sprite_format_sub: sprite_format_sub,
           tile_offset: l.tile_offset,
-          y_delta: l.y_delta,
+          x_delta: l.x_delta,
           comment: l.comment
         };
       }
@@ -224,33 +230,9 @@
         }
         return w & 0xFFFF;
       }
-
-      ////////////////////
-      // ConData generator
       
-      function buildConData(title, textWidth, offset = 0, noAct = false) {
-        const noActAdjust = (noAct ? 0x10 : 0);
-
-        const widthHalf = Math.floor(textWidth / 2.0);
-        
-        const NAME_start = 0x0000;
-        const NAME_target = 0x0120;
-
-        const ZONE_target = (0x00F0 + widthHalf + noActAdjust + offset) & 0xFFFF;
-        const ZONE_start = (ZONE_target - 0x0240 + noActAdjust) & 0xFFFF;
-
-        const OVAL_target = (ZONE_target + 0x0018 - noActAdjust) & 0xFFFF;
-        const OVAL_start = (OVAL_target + 0x00C0 - noActAdjust) & 0xFFFF;
-
-        const ACT_target = noAct ? 0x03EC : OVAL_target;
-        const ACT_start  = noAct ? 0x03EC : (ACT_target + 0x02C0) & 0xFFFF;
-
-        return `\t\tdc.w `
-          + `$${hex16(NAME_start)},$${hex16(NAME_target)}, `
-          + `$${hex16(ZONE_start)},$${hex16(ZONE_target)}, `
-          + `$${hex16(ACT_start)},$${hex16(ACT_target)}, `
-          + `$${hex16(OVAL_start)},$${hex16(OVAL_target)}`
-          + `\t; ${title.toUpperCase()}${noAct ? " (hide Act)" : ""}`;
+      function measureTextHeight(text) {
+        return (text.split("\n").length * 0x10) & 0xFFFF;
       }
 
       ////////////////////
@@ -293,8 +275,6 @@
           
       function resetClipboardButtons() {
         resetClipboardButton(clipboard, "Copy to clipboard");
-        resetClipboardButton(clipboardCon, "Copy ConData (with Act)");
-        resetClipboardButton(clipboardConNoAct, "Copy ConData (hide Act)");
       }
 
       function resetClipboardButton(el, val) {
@@ -322,10 +302,12 @@
       font-style: normal;
     }
 
+    footer a {
+      font-weight: bold;
+    }
     a {
       text-decoration: none;
       color: var(--muted);
-      font-weight: bold;
     }
     a:hover {
       color: var(--accent);
@@ -375,6 +357,7 @@
       align-items: center;
       gap: 12px;
       justify-content: center;
+      text-wrap: balance;
     }
 
     .panel {
@@ -404,6 +387,17 @@
     #text-in {
       font-size: 150%;
       font-family: var(--titlecard);
+      text-align: center;
+      width: 100%;
+      background: #121523;
+      color: var(--text);
+      resize: vertical;
+      height: 250px;
+      border-radius: 10px;
+    }
+    
+    #text-in.left {
+      text-align: left;
     }
 
     #text-in,
@@ -569,23 +563,26 @@
   <div class="wrap">
     <header>
       <h1><span class="titlecard">Sonic Text Code Generator</span> <span class="small" style="width:0">Mk.&nbsp;II</span></h1>
+      <div>
+        <strong>Sonic 1:</strong> <a href="/S1_titlecards.html">Zone Title Cards</a> &mdash; <u>Credits</u>
+      </div>
     </header>
     <div class="panel">
       <div class="grid">
         <div style="grid-column: 1 / -1;">
           <label for="text-in">Input text:</label>
-          <input id="text-in" type="text" autocomplete="off" autofocus placeholder="Type a zone name..." maxlength="32">
-          <div class="hint">Warning: The letters <span class="titlecard" style="font-size:80%">JQVWX</span> are unsupported.</div>
+          <textarea id="text-in" type="text" autocomplete="off" autofocus placeholder="Type your credits..." maxlength="120"></textarea>
+          <div class="hint">Warning: The letters <span class="titlecard" style="font-size:80%">QVWZ</span> are unsupported. Leave blank lines between entries for best results.</div>
         </div>
         <div>
           <label for="x-pos">Start X-coordinate (hex):</label>
           <input id="x-pos" type="text" autocomplete="off" placeholder="Auto" maxlength="2">
-          <div class="hint">Empty = automatically center</div>
+          <div class="hint">Empty = automatically center each line</div>
         </div>
         <div>
-          <label for="y-pos">Fixed Y-coordinate (hex):</label>
+          <label for="y-pos">Start Y-coordinate (hex):</label>
           <input id="y-pos" type="text" autocomplete="off" placeholder="Auto" maxlength="2">
-          <div class="hint">Empty = defaults to $F8</div>
+          <div class="hint">Empty = automatically center whole block</div>
         </div>
         <div id="status-wrap">
           <span class="badge" id="status">Ready to generate</span>
@@ -601,36 +598,17 @@
         </div>
       </div>
       <hr>
-      <div>
-        <div id="condata-wrap">
-          <label for="condata-out">ConData &mdash; used for positioning the name, "ZONE", Act number, and Oval:</label>
-          <div class="grid">
-            <input type="text" readonly autocomplete="off" id="condata-out" placeholder="ConData is generated here">
-            <input id="clipboard-condata-out" type="button" value="Copy ConData (with Act)">
-            
-            <input type="text" readonly autocomplete="off" id="condata-out-noact" placeholder="ConData is generated here (hide Act, for Final Zone)">
-            <input id="clipboard-condata-out-noact" type="button" value="Copy ConData (hide Act)">
-          </div>
-        </div>
-      </div>
-      <hr>
       <div class="row" id="location-guide">
         <dl>
           <label>GitHub disassembly:</label>
           <dd>
-            <span class="badge">MapData</span> sonic.asm &rarr; <code>Map_Card</code>
-          </dd>
-          <dd>
-            <span class="badge">ConData</span> _incObj &rarr; 34 Title Cards.asm &rarr; <code>Card_ConData</code>
+            <span class="badge">MapData</span> _maps &rarr; Credits.asm
           </dd>
         </dl>
         <dl>        
           <label>Hivebrain 2005 disassembly:</label>
           <dd>
-            <span class="badge">MapData</span> sonic1.asm &rarr; <code>Map_obj34</code>
-          </dd>
-          <dd>
-            <span class="badge">ConData</span> sonic1.asm &rarr; <code>Obj34_ConData</code>
+            <span class="badge">MapData</span> _maps &rarr; obj8A.asm
           </dd>
         </dl>
       </div>
