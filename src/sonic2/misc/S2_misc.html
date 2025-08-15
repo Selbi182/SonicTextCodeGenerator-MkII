@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>S2 Misc | Sonic Text Code Generator - Mk. II</title>
+  <meta name="viewport" content="width=device-width, initial-scale=0.8">
+  <link rel="icon" href="../../favicon.png" type="image/png">
+  <link rel="stylesheet" href="../../style_shared.css">
+  <link rel="stylesheet" href="style_S2_misc.css">
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1><span class="credits">Sonic Text Code Generator</span> <span class="small" style="width:0">Mk.&nbsp;II</span></h1>
+      <div id="change-generator">
+        <div>
+          <span class="badge">Sonic 1</span> <a href="../../sonic1/titlecards/S1_titlecards.html">Zone Title Cards</a> &mdash; <a href="../../sonic1/credits/S1_credits.html">Credits</a>
+        </div>
+        <div>
+          <span class="badge">Sonic 2</span> <a href="../../sonic2/titlecards/S2_titlecards.html">Zone Title Cards</a> &mdash; <strong>Misc</strong>
+        </div>
+      </div>
+    </header>
+    <div class="panel">
+      <div>Good news! You don't need any external tools at all for many of the texts in Sonic 2, because the community disassembly already comes with macros for most of them.</div>
+      <p>
+        <div>Here's a list of all the text-related things you can edit directly in <code>s2.asm</code> by hand:</div>
+        <table id="misc-locations">
+          <tr>
+            <th>Text type</th>
+            <th>Location in <code>s2.asm</code></th>
+          </tr>
+          <tr>
+            <td>Credits texts</td>
+            <td><code>byte_B55C:</code></td>
+          </tr>
+          <tr>
+            <td>"SONIC AND MILES IN" text</td>
+            <td><code>byte_BCE9:</code></td>
+          </tr>
+          <tr>
+            <td>Options texts</td>
+            <td><code>byte_97CA:</code></td>
+          </tr>
+          <tr>
+            <td>2P VS mode texts</td>
+            <td><code>byte_874A:</code></td>
+          </tr>
+          <tr>
+            <td>"&copy; 1992 SEGA" text</td>
+            <td><code>word_3E82:</code></td>
+          </tr>
+        </table>
+      </p>
+    </div>
+    <footer class="small">
+      <a href="https://github.com/Selbi182/SonicTextCodeGenerator-MkII">Source Code</a> &mdash; Created by <a href="https://selbi.club">Selbi</a>
+    </footer>
+  </div>
+</body>
+</html>

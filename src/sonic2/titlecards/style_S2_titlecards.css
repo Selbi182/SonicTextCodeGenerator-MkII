@@ -1,0 +1,18 @@
+:root {
+  --titlecard: "Sonic2TitleCards", sans-serif;
+}
+
+@font-face {
+  font-family: "Sonic2TitleCards";
+  src: url('sonic-2-title-card.otf.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.titlecard {
+  font-family: var(--titlecard);
+}
+
+#text-in {
+  font-family: var(--titlecard);
+}

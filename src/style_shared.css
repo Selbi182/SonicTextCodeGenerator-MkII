@@ -63,6 +63,10 @@ h1 {
   text-transform: uppercase;
 }
 
+h1 > span:first-child {
+  line-height: 30px;
+}
+
 #change-generator {
   text-align: left;
   width: fit-content;
@@ -183,7 +187,7 @@ input[type="checkbox"] {
   line-height: 1.5;
   white-space: pre;
   overflow: auto;
-  height: 200px;
+  height: 140px;
   min-width: 100%;
   max-width: 100%;
   resize: vertical;
@@ -252,5 +256,33 @@ footer {
   
   #location-guide {
     justify-content: start;
+  }
+}
+
+body {
+  --sb-track-color: #1f2330;
+  --sb-thumb-color: #9aa4b2;
+  --sb-size: 14px;
+}
+
+body::-webkit-scrollbar {
+  width: var(--sb-size)
+}
+
+body::-webkit-scrollbar-track {
+  background: var(--sb-track-color);
+  border-radius: 3px;
+}
+
+body::-webkit-scrollbar-thumb {
+  background: var(--sb-thumb-color);
+  border-radius: 3px;
+  
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  body {
+    scrollbar-color: var(--sb-thumb-color)
+                     var(--sb-track-color);
   }
 }
