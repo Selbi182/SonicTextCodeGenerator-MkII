@@ -1,0 +1,29 @@
+:root {
+  --credits: "Sonic1Credits", sans-serif;
+}
+
+@font-face {
+  font-family: "Sonic1Credits";
+  src: url('sonic-1-credits.otf.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.credits {
+  font-family: var(--credits);
+}
+
+#text-in {
+  font-family: var(--credits);
+  text-align: center;
+  width: 100%;
+  background: #121523;
+  color: var(--text);
+  resize: vertical;
+  height: 250px;
+  border-radius: 10px;
+}
+
+#text-in.left {
+  text-align: left;
+}

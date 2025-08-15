@@ -7,4 +7,4 @@ The tool is permanently accessible directly from the web over here:
 https://stcg.selbi.club
 
 ## Offline version
-The tool has been deliberately coded in such a way that everything important is contained in one huge HTML file. It can be downloaded and used offline with any modern browser.
+The tool has been deliberately coded using only vanilla JavaScript and CSS so that it can be downloaded and used offline with any modern browser.
