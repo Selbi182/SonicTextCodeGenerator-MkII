@@ -9,7 +9,8 @@ const DEFAULTS = {
 const SPACE_WIDTH = DEFAULTS.width;
 
 const letter = (
-    tile_offset, width = DEFAULTS.width,
+    tile_offset,
+    width = DEFAULTS.width,
     sprite_format = DEFAULTS.sprite_format,
     sprite_format_sub = DEFAULTS.sprite_format_sub,
     x_delta = 0,
@@ -95,13 +96,21 @@ function measureTextWidth(text, letters) {
 // Convenience selector
 const $ = sel => document.querySelector(sel);
 
-function parseHex(str, fallback) {
+function parseHexBase(str, fallback) {
   const cleaned = (str || "").trim().replace(/^\$/, "");
   if (!cleaned) {
     return fallback;
   }
-  const n = parseInt(cleaned, 16);
+  return parseInt(cleaned, 16);
+}
+function parseHex(str, fallback) {
+  const n = parseHexBase(str, fallback);
   return Number.isFinite(n) ? (n & 0xFF) : fallback;
+}
+
+function parseHex16(str, fallback) {
+  const n = parseHexBase(str, fallback);
+  return Number.isFinite(n) ? (n & 0xFFFF) : fallback;
 }
 
 function hex(n) {

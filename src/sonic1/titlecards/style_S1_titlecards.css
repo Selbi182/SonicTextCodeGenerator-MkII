@@ -9,10 +9,18 @@
   font-style: normal;
 }
 
-.titlecard {
+.titlecard, #text-in {
   font-family: var(--titlecard);
 }
 
-#text-in {
-  font-family: var(--titlecard);
+#condata-wrap .grid {
+  gap: 8px 0;
+  tab-size: 1;
+}
+
+#condata-wrap input[type="text"] {
+  grid-column: 1 / 3;
+  font-family: var(--mono);
+  color: var(--text);
+  font-size: 13px;
 }

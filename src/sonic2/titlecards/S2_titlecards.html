@@ -24,7 +24,66 @@
       </div>
     </header>
     <div class="panel">
-      Coming soon...
+      <div class="grid">
+        <div style="grid-column: 1 / -1;">
+          <label for="text-in">Input text:</label>
+          <input id="text-in" type="text" autocomplete="off" autofocus spellcheck="false" placeholder="Type a zone name..." maxlength="32">
+          <div class="hint">Warning: Max. 8 unique letters (excluding <span class="titlecard">ENOZ</span>, which are always loaded).</div>
+        </div>
+        <div>
+          <label for="x-pos">Start X-coordinate (hex, word):</label>
+          <input id="x-pos" type="text" autocomplete="off" spellcheck="false" placeholder="Auto" maxlength="4">
+          <div class="hint">Empty = right-aligned to end on $0070</div>
+        </div>
+        <div>
+          <label for="y-pos">Fixed Y-coordinate (hex, byte):</label>
+          <input id="y-pos" type="text" autocomplete="off" spellcheck="false" placeholder="Auto" maxlength="2">
+          <div class="hint">Empty = defaults to $00</div>
+        </div>
+        <div id="status-wrap">
+          <span class="badge" id="status">Ready to generate</span>
+          <span class="small" id="summary"></span>
+        </div>
+      </div>
+      <hr>
+      <div class="out">
+        <label for="text-out">MapData &mdash; the per-letter sprite mappings:</label>
+        <textarea readonly id="text-out" placeholder="(Output is generated here)" autocomplete="off"></textarea>
+        <div>
+          <input id="clipboard" type="button" value="Copy to clipboard">
+        </div>
+      </div>
+      <hr>
+      <div>
+        <div id="artdata-wrap">
+          <label for="artdata-out">ArtData &mdash; used to load the letters into VRAM:</label>
+          <div class="grid">
+            <input type="text" readonly autocomplete="off" id="artdata-out" placeholder="ArtData is generated here">
+            <input id="clipboard-artdata-out" type="button" value="Copy ArtData">
+          </div>
+        </div>
+      </div>
+      <hr>
+      <div class="row" id="location-guide">
+        <dl>
+          <label>GitHub disassembly (exact labels depend on your pull date):</label>
+          <dd>
+            <span class="badge">MapData</span> s2.asm &rarr; <span><code>Obj34_MapUnc_147BA</code></span> / <span><code>MapUnc_TitleCards</code></span>
+          </dd>
+          <dd>
+            <span class="badge">ArtData</span> s2.asm &rarr; <span><code>word_15832</code></span> / <span><code>TitleCardLetters</code></span>
+          </dd>
+        </dl>
+        <dl>        
+          <label>Xenowhirl 2007 disassembly:</label>
+          <dd>
+            <a href="https://info.sonicretro.org/Sonic_2_-_Text_Code_Generator">Use my old <strong>Sonic 2 Text Code Generator</strong></a>
+          </dd>
+          <dd>
+            <span class="small">(because that system was awful)</span>
+          </dd>
+        </dl>
+      </div>
     </div>
     <footer class="small">
       <a href="https://github.com/Selbi182/SonicTextCodeGenerator-MkII">Source Code</a> &mdash; Created by <a href="https://selbi.club">Selbi</a>
