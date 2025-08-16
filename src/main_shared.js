@@ -142,3 +142,42 @@ function copyToClipboard(el, out) {
 function resetClipboardButton(el, val) {
   el.value = val;
 }
+
+////////////////////
+// Header and Footer
+
+const mainContent = document.querySelector("body .wrap");
+
+// Header
+const header = document.createElement("header");
+header.innerHTML = `
+  <h1>
+    <span class="sonic-font">Sonic Text Code Generator</span> <span class="small mkii">Mk.&nbsp;II</span>
+  </h1>
+  <div id="change-generator">
+    <div>
+      <span class="badge">Sonic 1</span>
+      <a class="s1_titlecards" href="../../sonic1/titlecards/S1_titlecards.html" class="active">Zone Title Cards</a>
+      &mdash;
+      <a class="s1_credits" href="../../sonic1/credits/S1_credits.html">Credits</a>
+    </div>
+    <div>
+      <span class="badge">Sonic 2</span>
+      <a class="s2_titlecards" href="../../sonic2/titlecards/S2_titlecards.html">Zone Title Cards</a>
+      &mdash;
+      <a class="s2_misc" href="../../sonic2/misc/S2_misc.html">Misc</a>
+    </div>
+  </div>
+`;
+const stcgType = document.querySelector('meta[name="stcg_type"]')?.content;
+header.querySelector(`a.${stcgType}`)?.classList.add("active");
+mainContent.prepend(header);
+
+// Footer
+const footer = document.createElement("footer");
+footer.innerHTML = `
+  <a href="https://github.com/Selbi182/SonicTextCodeGenerator-MkII">Source Code</a>
+  &mdash;
+  Created by <a href="https://selbi.club">Selbi</a>
+`;
+mainContent.append(footer);

@@ -52,6 +52,16 @@ header {
   margin-bottom: 16px;
 }
 
+.mkii {
+  width: 0;
+}
+
+#change-generator a.active {
+  pointer-events: none;
+  color: var(--text);
+  font-weight: bold;
+}
+
 h1 {
   font-size: 20px;
   margin: 0 0 8px;
@@ -231,6 +241,8 @@ input[type="checkbox"] {
 footer {
   text-align: center;
   margin: 12px;
+  font-size: 12px;
+  color: var(--muted);
 }
 
 @media only screen and (max-aspect-ratio: 3/2) {
@@ -238,7 +250,7 @@ footer {
     flex-direction: column;
   }
   
-  h1 .small {
+  .mkii {
     width: auto !important;
   }
   

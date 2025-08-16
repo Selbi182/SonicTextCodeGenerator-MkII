@@ -9,7 +9,7 @@
   font-style: normal;
 }
 
-.titlecard, #text-in {
+.sonic-font, #text-in {
   font-family: var(--titlecard);
   letter-spacing: 2px;
 }

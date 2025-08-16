@@ -9,12 +9,11 @@
   font-style: normal;
 }
 
-.credits {
+.sonic-font, #text-in {
   font-family: var(--credits);
 }
 
 #text-in {
-  font-family: var(--credits);
   text-align: center;
   width: 100%;
   background: #121523;

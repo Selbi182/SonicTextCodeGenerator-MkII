@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>S2 Title Cards | Sonic Text Code Generator - Mk. II</title>
   <meta name="viewport" content="width=device-width, initial-scale=0.8">
+  <meta name="stcg_type" content="s2_titlecards">
   <link rel="icon" href="../../favicon.png" type="image/png">
   <script src="../../main_shared.js" defer></script>
   <script src="main_S2_titlecards.js" defer></script>
@@ -12,23 +13,12 @@
 </head>
 <body>
   <div class="wrap">
-    <header>
-      <h1><span class="titlecard">Sonic Text Code Generator</span> <span class="small" style="width:0">Mk.&nbsp;II</span></h1>
-      <div id="change-generator">
-        <div>
-          <span class="badge">Sonic 1</span> <a href="../../sonic1/titlecards/S1_titlecards.html">Zone Title Cards</a> &mdash; <a href="../../sonic1/credits/S1_credits.html">Credits</a>
-        </div>
-        <div>
-          <span class="badge">Sonic 2</span> <strong>Zone Title Cards</strong> &mdash; <a href="../../sonic2/misc/S2_misc.html">Misc</a>
-        </div>
-      </div>
-    </header>
     <div class="panel">
       <div class="grid">
         <div style="grid-column: 1 / -1;">
           <label for="text-in">Input text:</label>
           <input id="text-in" type="text" autocomplete="off" autofocus spellcheck="false" placeholder="Type a zone name..." maxlength="32">
-          <div class="hint">Warning: Max. 8 unique letters (excluding <span class="titlecard">ENOZ</span>, which are always loaded).</div>
+          <div class="hint">Warning: Max. 8 unique letters (excluding <span class="sonic-font">ENOZ</span>, which are always loaded).</div>
         </div>
         <div>
           <label for="x-pos">Start X-coordinate (hex, word):</label>
@@ -85,9 +75,6 @@
         </dl>
       </div>
     </div>
-    <footer class="small">
-      <a href="https://github.com/Selbi182/SonicTextCodeGenerator-MkII">Source Code</a> &mdash; Created by <a href="https://selbi.club">Selbi</a>
-    </footer>
   </div>
 </body>
 </html>

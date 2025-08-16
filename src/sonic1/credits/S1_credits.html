@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>S1 Credits | Sonic Text Code Generator - Mk. II</title>
   <meta name="viewport" content="width=device-width, initial-scale=0.8">
+  <meta name="stcg_type" content="s1_credits">
   <link rel="icon" href="../../favicon.png" type="image/png">
   <script src="../../main_shared.js" defer></script>
   <script src="main_S1_credits.js" defer></script>
@@ -12,23 +13,12 @@
 </head>
 <body>
   <div class="wrap">
-    <header>
-      <h1><span class="credits">Sonic Text Code Generator</span> <span class="small" style="width:0">Mk.&nbsp;II</span></h1>
-      <div id="change-generator">
-        <div>
-          <span class="badge">Sonic 1</span> <a href="../../sonic1/titlecards/S1_titlecards.html">Zone Title Cards</a> &mdash; <strong>Credits</strong>
-        </div>
-        <div>
-          <span class="badge">Sonic 2</span> <a href="../../sonic2/titlecards/S2_titlecards.html">Zone Title Cards</a> &mdash; <a href="../../sonic2/misc/S2_misc.html">Misc</a>
-        </div>
-      </div>
-    </header>
     <div class="panel">
       <div class="grid">
         <div style="grid-column: 1 / -1;">
           <label for="text-in">Input text:</label>
           <textarea id="text-in" type="text" autocomplete="off" autofocus spellcheck="false" placeholder="Type your credits..." maxlength="120"></textarea>
-          <div class="hint">Warning: The letters <span class="credits">QVWZ</span> are unsupported. Leave blank lines between entries for best results.</div>
+          <div class="hint">Warning: The letters <span class="sonic-font">QVWZ</span> are unsupported. Leave blank lines between entries for best results.</div>
         </div>
         <div>
           <label for="x-pos">Start X-coordinate (hex):</label>
@@ -69,9 +59,6 @@
         </dl>
       </div>
     </div>
-    <footer class="small">
-      <a href="https://github.com/Selbi182/SonicTextCodeGenerator-MkII">Source Code</a> &mdash; Created by <a href="https://selbi.club">Selbi</a>
-    </footer>
   </div>
 </body>
 </html>
