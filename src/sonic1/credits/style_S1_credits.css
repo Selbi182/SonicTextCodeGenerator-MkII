@@ -4,7 +4,7 @@
 
 @font-face {
   font-family: "Sonic1Credits";
-  src: url('sonic-1-credits.otf.woff2') format('woff2');
+  src: url('../../font/sonic-1-credits.otf.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
 }
