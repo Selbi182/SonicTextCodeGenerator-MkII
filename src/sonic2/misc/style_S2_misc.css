@@ -9,7 +9,7 @@
   padding: 8px;
 }
 
-#misc-locations tr:nth-child(even) {
+#misc-locations tr:nth-child(odd) {
   background-color: var(--bg);
 }
 
