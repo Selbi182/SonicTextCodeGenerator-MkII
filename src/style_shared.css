@@ -30,12 +30,12 @@ hr {
 
 html,
 body {
-  height: 100%;
   overflow-x: hidden;
-  background: linear-gradient(180deg, #151826, #0f1120 40%);
+  background: var(--bg);
 }
 
 body {
+  height: 100%;
   margin: 0;
   font-family: var(--sans);
   color: var(--text);
