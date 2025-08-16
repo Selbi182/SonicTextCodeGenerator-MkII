@@ -11,6 +11,7 @@
 
 .sonic-font, #text-in {
   font-family: var(--credits);
+  letter-spacing: 2px;
 }
 
 #text-in {

@@ -11,6 +11,7 @@
 
 .sonic-font {
   font-family: var(--titlecard);
+  letter-spacing: 2px;
 }
 
 #misc-locations {
