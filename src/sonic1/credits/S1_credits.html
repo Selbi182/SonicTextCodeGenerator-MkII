@@ -5,8 +5,8 @@
   <title>S1 Credits | Sonic Text Code Generator - Mk. II</title>
   <meta name="viewport" content="width=device-width, initial-scale=0.8">
   <link rel="icon" href="../../favicon.png" type="image/png">
-  <script src="../../main_shared.js" type="module"></script>
-  <script src="main_S1_credits.js" type="module"></script>
+  <script src="../../main_shared.js" defer></script>
+  <script src="main_S1_credits.js" defer></script>
   <link rel="stylesheet" href="../../style_shared.css">
   <link rel="stylesheet" href="style_S1_credits.css">
 </head>
@@ -27,17 +27,17 @@
       <div class="grid">
         <div style="grid-column: 1 / -1;">
           <label for="text-in">Input text:</label>
-          <textarea id="text-in" type="text" autocomplete="off" autofocus placeholder="Type your credits..." maxlength="120"></textarea>
+          <textarea id="text-in" type="text" autocomplete="off" autofocus spellcheck="false" placeholder="Type your credits..." maxlength="120"></textarea>
           <div class="hint">Warning: The letters <span class="credits">QVWZ</span> are unsupported. Leave blank lines between entries for best results.</div>
         </div>
         <div>
           <label for="x-pos">Start X-coordinate (hex):</label>
-          <input id="x-pos" type="text" autocomplete="off" placeholder="Auto" maxlength="2">
+          <input id="x-pos" type="text" autocomplete="off" spellcheck="false" placeholder="Auto" maxlength="2">
           <div class="hint">Empty = automatically center each line</div>
         </div>
         <div>
           <label for="y-pos">Start Y-coordinate (hex):</label>
-          <input id="y-pos" type="text" autocomplete="off" placeholder="Auto" maxlength="2">
+          <input id="y-pos" type="text" autocomplete="off" spellcheck="false" placeholder="Auto" maxlength="2">
           <div class="hint">Empty = automatically center whole block</div>
         </div>
         <div id="status-wrap">

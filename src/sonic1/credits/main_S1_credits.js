@@ -1,5 +1,3 @@
-import { $, DEFAULTS, SPACE_WIDTH, letter, createLetterPiece, measureTextWidth, parseHex, hex, hex16, pluralize, copyToClipboard, resetClipboardButton } from "/main_shared.js"
-
 // Letter mapping definitions
 const LETTERS = {
   A: letter(0x04),

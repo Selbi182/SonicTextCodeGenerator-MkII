@@ -1,14 +1,14 @@
 ////////////////////
 // Definitions
 
-export const DEFAULTS = {
+const DEFAULTS = {
   width: 16,
   sprite_format: 5,
   sprite_format_sub: 0
 };
-export const SPACE_WIDTH = DEFAULTS.width;
+const SPACE_WIDTH = DEFAULTS.width;
 
-export const letter = (
+const letter = (
     tile_offset, width = DEFAULTS.width,
     sprite_format = DEFAULTS.sprite_format,
     sprite_format_sub = DEFAULTS.sprite_format_sub,
@@ -21,7 +21,7 @@ export const letter = (
 ////////////////////
 // Letter calc
 
-export function createLetterPiece(char, yPos, xPos, letters) {
+function createLetterPiece(char, yPos, xPos, letters) {
   if (char === " ") {
     return {
       mapping: "\t\t\t\t\t\t; space",
@@ -76,7 +76,7 @@ function getLetter(ch, letters) {
   };
 }
 
-export function measureTextWidth(text, letters) {
+function measureTextWidth(text, letters) {
   let w = 0;
   for (const ch of text) {
     if (ch === " ") {
@@ -93,9 +93,9 @@ export function measureTextWidth(text, letters) {
 // Helpers
 
 // Convenience selector
-export const $ = sel => document.querySelector(sel);
+const $ = sel => document.querySelector(sel);
 
-export function parseHex(str, fallback) {
+function parseHex(str, fallback) {
   const cleaned = (str || "").trim().replace(/^\$/, "");
   if (!cleaned) {
     return fallback;
@@ -104,22 +104,22 @@ export function parseHex(str, fallback) {
   return Number.isFinite(n) ? (n & 0xFF) : fallback;
 }
 
-export function hex(n) {
+function hex(n) {
   return (n & 0xFF).toString(16).toUpperCase().padStart(2, "0");
 }
 
-export function hex16(n) {
+function hex16(n) {
   return (n & 0xFFFF).toString(16).toUpperCase().padStart(4, "0");
 }
 
-export function pluralize(num) {
+function pluralize(num) {
   return num === 1 ? "" : "s";
 }
 
 ////////////////////
 // Clipboard
 
-export function copyToClipboard(el, out) {
+function copyToClipboard(el, out) {
   if ($("#text-in").value.length == 0) {
     alert("Type something first, you doofus.");
     return;
@@ -130,6 +130,6 @@ export function copyToClipboard(el, out) {
   el.value = "Copied!";
 }
 
-export function resetClipboardButton(el, val) {
+function resetClipboardButton(el, val) {
   el.value = val;
 }
