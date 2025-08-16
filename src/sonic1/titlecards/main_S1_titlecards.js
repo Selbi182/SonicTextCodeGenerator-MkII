@@ -94,7 +94,8 @@ function generateOutput() {
   // Compile and output mappings
   let output = "";
   if (lines.length) {
-    lines.unshift(`\tdc.b ${spriteCount}\t; ${title.toUpperCase()}`);
+    const comment = title ? `\t; ${title.toUpperCase()}` : "";
+    lines.unshift(`\tdc.b ${spriteCount}${comment}`);
     lines.push(`\t\teven`);
     output = lines.join("\n");
   }
