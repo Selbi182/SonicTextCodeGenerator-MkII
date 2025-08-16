@@ -157,15 +157,19 @@ header.innerHTML = `
   <div id="change-generator">
     <div>
       <span class="badge">Sonic 1</span>
-      <a class="s1_titlecards" href="../../sonic1/titlecards/S1_titlecards.html" class="active">Zone Title Cards</a>
-      &mdash;
-      <a class="s1_credits" href="../../sonic1/credits/S1_credits.html">Credits</a>
+        <a class="s1_titlecards" href="../../sonic1/titlecards/S1_titlecards.html" class="active">Zone Title Cards</a>
+        &mdash;
+        <a class="s1_credits" href="../../sonic1/credits/S1_credits.html">Credits</a>
+        &mdash;
+        <a class="s1_misc" href="../../sonic1/misc/s1_misc.html" class="active">Misc</a>
     </div>
     <div>
       <span class="badge">Sonic 2</span>
-      <a class="s2_titlecards" href="../../sonic2/titlecards/S2_titlecards.html">Zone Title Cards</a>
-      &mdash;
-      <a class="s2_misc" href="../../sonic2/misc/S2_misc.html">Misc</a>
+        <a class="s2_titlecards" href="../../sonic2/titlecards/S2_titlecards.html">Zone Title Cards</a>
+        &mdash;
+        <a class="s2_endoflevel" href="../../sonic2/endoflevel/s2_endoflevel.html" class="active">End of Level</a>
+        &mdash;
+        <a class="s2_misc" href="../../sonic2/misc/S2_misc.html">Misc</a>
     </div>
   </div>
 `;
