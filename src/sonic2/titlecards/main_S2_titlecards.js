@@ -171,7 +171,7 @@ function createS2LetterPiece(char, yPos, xPos, letterMap) {
     };
   }
   return {
-    mapping: `\t; ${char.toUpperCase()} "is an invalid character"`,
+    mapping: `\t; ${char.toUpperCase()} is an invalid character`,
     width: DEFAULTS.width,
     invalid: true
   };
