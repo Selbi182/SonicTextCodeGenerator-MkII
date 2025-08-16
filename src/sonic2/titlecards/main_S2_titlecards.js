@@ -194,10 +194,6 @@ function createLetterMap(text) {
   return letterMap;
 }
 
-function isENOZ(char) {
-	return ["E", "N", "O", "Z"].includes(char);
-}
-
 ////////////////////
 // Clipboard
 

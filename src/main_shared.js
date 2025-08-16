@@ -6,7 +6,7 @@ const DEFAULTS = {
   sprite_format: 5,
   sprite_format_sub: 0
 };
-const SPACE_WIDTH = DEFAULTS.width;
+let spaceWidth = DEFAULTS.width;
 
 const letter = (
     tile_offset,
@@ -26,7 +26,7 @@ function createLetterPiece(char, yPos, xPos, letters) {
   if (char === " ") {
     return {
       mapping: "\t\t\t\t\t\t; space",
-      width: SPACE_WIDTH,
+      width: spaceWidth,
       invalid: false
     };
   }
@@ -81,7 +81,7 @@ function measureTextWidth(text, letters) {
   let w = 0;
   for (const ch of text) {
     if (ch === " ") {
-      w += SPACE_WIDTH;
+      w += spaceWidth;
     } else {
       const l = getLetter(ch, letters);
       w += l ? l.width : DEFAULTS.width;
@@ -123,6 +123,10 @@ function hex16(n) {
 
 function pluralize(num) {
   return num === 1 ? "" : "s";
+}
+
+function isENOZ(char) {
+  return ["E", "N", "O", "Z"].includes(char);
 }
 
 ////////////////////
@@ -182,6 +186,6 @@ const footer = document.createElement("footer");
 footer.innerHTML = `
   <a href="https://github.com/Selbi182/SonicTextCodeGenerator-MkII">Source Code</a>
   &mdash;
-  Created by <a href="https://selbi.club">Selbi</a>
+  Created by <a href="https://selbi.club">Selbi</a> with help from RobiWanKenobi
 `;
 mainContent.append(footer);
