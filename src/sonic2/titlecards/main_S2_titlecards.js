@@ -142,7 +142,7 @@ function createS2LetterPiece(char, yPos, xPos, letterMap) {
   if (char === " ") {
     return {
       mapping: "\t\t\t\t\t; space",
-      width: SPACE_WIDTH,
+      width: spaceWidth,
       invalid: false
     };
   }
