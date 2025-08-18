@@ -159,21 +159,25 @@ header.innerHTML = `
     <span class="sonic-font">Sonic Text Code Generator</span> <span class="small mkii">Mk.&nbsp;II</span>
   </h1>
   <div id="change-generator">
-    <div>
-      <span class="badge">Sonic 1</span>
+    <div class="row lc">
+      <div class="badge">Sonic 1</div>
+      <div>
         <a class="S1_titlecards" href="../../sonic1/titlecards" class="active">Zone Title Cards</a>
-        &mdash;
+        &bull;
         <a class="S1_credits" href="../../sonic1/credits">Credits</a>
-        &mdash;
+        &bull;
         <a class="S1_misc" href="../../sonic1/misc" class="active">Misc</a>
+      </div>
     </div>
-    <div>
-      <span class="badge">Sonic 2</span>
+    <div class="row lc">
+      <div class="badge">Sonic 2</div>
+      <div>
         <a class="S2_titlecards" href="../../sonic2/titlecards">Zone Title Cards</a>
-        &mdash;
+        &bull;
         <a class="S2_endoflevel" href="../../sonic2/endoflevel" class="active">End of Level</a>
-        &mdash;
+        &bull;
         <a class="S2_misc" href="../../sonic2/misc">Misc</a>
+      </div>
     </div>
   </div>
 `;
@@ -191,8 +195,8 @@ mainContent.prepend(header);
 // Footer
 const footer = document.createElement("footer");
 footer.innerHTML = `
-  <a href="https://github.com/Selbi182/SonicTextCodeGenerator-MkII">Source Code</a>
-  &mdash;
   Created by <a href="https://selbi.club">Selbi</a> with help from RobiWanKenobi
+  &bull;
+  <a href="https://github.com/Selbi182/SonicTextCodeGenerator-MkII">Source Code</a>
 `;
 mainContent.append(footer);
