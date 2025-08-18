@@ -167,8 +167,13 @@ input[type="checkbox"] {
   align-items: center;
 }
 
-#status.error {
+#status.error, #status.warning.error {
   color: red;
+  font-weight: bold;
+}
+
+#status.warning {
+  color: darkorange;
   font-weight: bold;
 }
 

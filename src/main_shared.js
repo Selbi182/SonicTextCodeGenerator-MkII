@@ -129,6 +129,13 @@ function isENOZ(char) {
   return ["E", "N", "O", "Z"].includes(char);
 }
 
+function setStatus(message, summaryText = "", isError = false, isWarning = false) {
+  status.textContent = message;
+  status.classList.toggle("error", isError);
+  status.classList.toggle("warning", isWarning);
+  summary.textContent = summaryText;
+};
+
 ////////////////////
 // Clipboard
 

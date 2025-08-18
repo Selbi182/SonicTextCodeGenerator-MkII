@@ -119,11 +119,6 @@ function generateOutput() {
   out.textContent = output;
 
   // Update status
-  const setStatus = (message, summaryText = "", isError = false) => {
-    status.textContent = message;
-    status.classList.toggle("error", isError);
-    summary.textContent = summaryText;
-  };
   if (!text) {
     setStatus('Ready to generate');
   } else if (spriteCount > 80) {
@@ -133,7 +128,7 @@ function generateOutput() {
   } else if (overflow) {
     setStatus('Generated with errors', 'At least one line is too long!', true);
   } else if (invalidCount > 0) {
-    setStatus('Generated with warnings', `(${invalidCount} unsupported char${pluralize(invalidCount)})`, true);
+    setStatus('Generated with warnings', `(${invalidCount} unsupported char${pluralize(invalidCount)})`, false, true);
   } else {
     setStatus('Generated', `(${spriteCount} sprite mapping${pluralize(spriteCount)})`);
   }

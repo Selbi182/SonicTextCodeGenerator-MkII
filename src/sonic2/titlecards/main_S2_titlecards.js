@@ -117,12 +117,6 @@ function generateOutput() {
   }
 
   // Update status
-  const setStatus = (message, summaryText = "", isError = false) => {
-    status.textContent = message;
-    status.classList.toggle("error", isError);
-    summary.textContent = summaryText;
-  };
-
   const uniqueLetterCount = uniqueLetters.length;
   if (!text) {
     setStatus('Ready to generate');
@@ -131,7 +125,7 @@ function generateOutput() {
   } else if (overflow) {
     setStatus('Generated with errors', 'Text overflow, pick a shorter name!', true);
   } else if (invalidCount > 0) {
-    setStatus('Generated with warnings', `(${invalidCount} unsupported char${pluralize(invalidCount)})`, true);
+    setStatus('Generated with warnings', `(${invalidCount} unsupported char${pluralize(invalidCount)})`, false, true);
   } else {
     setStatus('Generated', `(${spriteCount} sprite mapping${pluralize(spriteCount)}, ${uniqueLetterCount} unique letter${pluralize(uniqueLetterCount)})`);
   }
