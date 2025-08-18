@@ -161,25 +161,32 @@ header.innerHTML = `
   <div id="change-generator">
     <div>
       <span class="badge">Sonic 1</span>
-        <a class="s1_titlecards" href="../../sonic1/titlecards/S1_titlecards.html" class="active">Zone Title Cards</a>
+        <a class="S1_titlecards" href="../../sonic1/titlecards" class="active">Zone Title Cards</a>
         &mdash;
-        <a class="s1_credits" href="../../sonic1/credits/S1_credits.html">Credits</a>
+        <a class="S1_credits" href="../../sonic1/credits">Credits</a>
         &mdash;
-        <a class="s1_misc" href="../../sonic1/misc/S1_misc.html" class="active">Misc</a>
+        <a class="S1_misc" href="../../sonic1/misc" class="active">Misc</a>
     </div>
     <div>
       <span class="badge">Sonic 2</span>
-        <a class="s2_titlecards" href="../../sonic2/titlecards/S2_titlecards.html">Zone Title Cards</a>
+        <a class="S2_titlecards" href="../../sonic2/titlecards">Zone Title Cards</a>
         &mdash;
-        <a class="s2_endoflevel" href="../../sonic2/endoflevel/S2_endoflevel.html" class="active">End of Level</a>
+        <a class="S2_endoflevel" href="../../sonic2/endoflevel" class="active">End of Level</a>
         &mdash;
-        <a class="s2_misc" href="../../sonic2/misc/S2_misc.html">Misc</a>
+        <a class="S2_misc" href="../../sonic2/misc">Misc</a>
     </div>
   </div>
 `;
+if (window.location.protocol === "file:") {
+  header.querySelectorAll("a").forEach(el => {
+    el.href += `/${el.classList}.html`;
+  });
+  console.log("Running locally");
+}
 const stcgType = document.querySelector('meta[name="stcg_type"]')?.content;
 header.querySelector(`a.${stcgType}`)?.classList.add("active");
 mainContent.prepend(header);
+
 
 // Footer
 const footer = document.createElement("footer");
