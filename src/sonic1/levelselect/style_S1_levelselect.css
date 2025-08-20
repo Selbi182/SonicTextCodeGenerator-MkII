@@ -1,0 +1,42 @@
+:root {
+  --titlecard: "Sonic1TitleCards", sans-serif;
+}
+
+@font-face {
+  font-family: "Sonic1TitleCards";
+  src: url('../../font/sonic-1-title-card.otf.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.sonic-font {
+  font-family: var(--titlecard);
+}
+
+
+.tab button {
+  color: var(--muted);
+  background-color: black;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+}
+.tab button:hover, .tab button.active {
+  color: var(--text);
+  background-color: var(--bg);
+}
+
+.tabcontent {
+  display: none;
+}
+
+.tabcontent.active {
+  display: initial;
+}
+
+.codebox {
+  overflow-x: hidden;
+  height: 400px;
+}
+

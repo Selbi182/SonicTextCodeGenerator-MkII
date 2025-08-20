@@ -201,7 +201,7 @@ input[type="checkbox"] {
   margin: 16px 0;
 }
 
-#text-out {
+#text-out, .codebox {
   margin: 0;
   padding: 14px 16px;
   background: #0e1020;

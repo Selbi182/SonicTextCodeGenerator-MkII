@@ -139,13 +139,13 @@ function setStatus(message, summaryText = "", isError = false, isWarning = false
 ////////////////////
 // Clipboard
 
-function copyToClipboard(el, out) {
-  if ($("#text-in").value.length == 0) {
+function copyToClipboard(el, sourceElem, inputCheck = true) {
+  if (inputCheck && $("#text-in").value.length == 0) {
     alert("Type something first, you doofus.");
     return;
   }
-  out.focus();
-  out.select();
+  sourceElem.focus();
+  sourceElem.select();
   document.execCommand("copy");
   el.value = "Copied!";
 }
@@ -169,11 +169,13 @@ header.innerHTML = `
     <div class="row lc">
       <div class="badge">Sonic 1</div>
       <div>
-        <a class="S1_titlecards" href="../../sonic1/titlecards" class="active">Zone Title Cards</a>
+        <a class="S1_titlecards" href="../../sonic1/titlecards">Zone Title Cards</a>
         &bull;
         <a class="S1_credits" href="../../sonic1/credits">Credits</a>
         &bull;
-        <a class="S1_misc" href="../../sonic1/misc" class="active">Misc</a>
+        <a class="S1_levelselect" href="../../sonic1/levelselect">Level Select</a>
+        &bull;
+        <a class="S1_misc" href="../../sonic1/misc">Misc</a>
       </div>
     </div>
     <div class="row lc">
@@ -181,7 +183,9 @@ header.innerHTML = `
       <div>
         <a class="S2_titlecards" href="../../sonic2/titlecards">Zone Title Cards</a>
         &bull;
-        <a class="S2_endoflevel" href="../../sonic2/endoflevel" class="active">End of Level</a>
+        <a class="S2_endoflevel" href="../../sonic2/endoflevel">End of Level</a>
+        &bull;
+        <a class="S2_levelselect" href="../../sonic2/levelselect">Level Select</a>
         &bull;
         <a class="S2_misc" href="../../sonic2/misc">Misc</a>
       </div>

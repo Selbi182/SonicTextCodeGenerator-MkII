@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>S1 Level Select | Sonic Text Code Generator - Mk. II</title>
+  <meta name="viewport" content="width=device-width, initial-scale=0.8">
+  <meta name="stcg_type" content="S1_levelselect">
+  <link rel="icon" href="../../favicon.png" type="image/png">
+  <link rel="stylesheet" href="../../style_shared.css">
+  <link rel="stylesheet" href="style_S1_levelselect.css">
+  <script src="../../main_shared.js" defer></script>
+  <script src="main_S1_levelselect.js" defer></script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <div>
+        The level select text is a raw binary file in most Sonic 1 disassemblies. Instead of a custom generator, it's easier to just write a macro and let you edit it by hand yourself directly in the source.
+      </div>
+      <p>
+        Open <code>sonic.asm</code> (or <code>sonic1.asm</code> for Hivebrain 2005), go to the <code>LevelMenuText</code> label, and replace the include with the following code, depending on which assembler you use.
+      </p>
+      <p>Side note: if your project uses the fixed order from the Japanes rev01 version, you'll need to fix the order here too.</p>
+
+      <div class="tab">
+        <button class="tablink active" onclick="openCode(event, '#AS')">AS</button>
+        <button class="tablink" onclick="openCode(event, '#ASM68K')">ASM68K</button>
+      </div>
+      <blockquote>
+        <div id="AS" class="tabcontent active">
+        	<h3>AS assembler</h3>
+        	<textarea readonly class="codebox" autocomplete="off">LevelMenuText:
+		charset ' ', $FF
+		charset '0', "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09"
+		charset '$', $0A
+		charset '-', $0B
+		charset '=', $0C
+		charset '>', $0D
+		;charset '>', $0E ; there are two identical right arrows back-to-back in the menutext font, for some reason
+		charset 'Y', "\x0F\x10" ; Y and Z come before A-X
+		charset 'A', "\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F\x20\x21\x22\x23\x24\x25\x26\x27\x28"
+
+		dc.b "GREEN HILL ZONE  STAGE 1"
+		dc.b "                 STAGE 2"
+		dc.b "                 STAGE 3"
+		dc.b "LABYRINTH ZONE   STAGE 1"
+		dc.b "                 STAGE 2"
+		dc.b "                 STAGE 3"
+		dc.b "MARBLE ZONE      STAGE 1"
+		dc.b "                 STAGE 2"
+		dc.b "                 STAGE 3"
+		dc.b "STAR LIGHT ZONE  STAGE 1"
+		dc.b "                 STAGE 2"
+		dc.b "                 STAGE 3"
+		dc.b "SPRING YARD ZONE STAGE 1"
+		dc.b "                 STAGE 2"
+		dc.b "                 STAGE 3"
+		dc.b "SCRAP BRAIN ZONE STAGE 1"
+		dc.b "                 STAGE 2"
+		dc.b "                 STAGE 3"
+		dc.b "FINAL ZONE              "
+		dc.b "SPECIAL STAGE           "
+		dc.b "SOUND SELECT            "
+
+		charset
+		even</textarea>
+        </div>
+        <div id="ASM68K" class="tabcontent">
+          <h3>ASM68K assembler</h3>
+        	<textarea readonly class="codebox" autocomplete="off">lstxt macro textline
+	i:   = 1
+	len: = strlen(\textline)
+	if len<>24
+		inform 2, "line length must be exactly 24 characters"
+	endif
+
+	while (i<=len)
+		char:	substr i,i,\textline
+		i: = i+1
+
+		if     "\char"=' '
+			dc.b	$FF
+		elseif ("\char">='0')&("\char"<='9')
+			dc.b	$00+"\char"-'0'
+		elseif "\char"='$'
+			dc.b	$0A
+		elseif "\char"='-'
+			dc.b	$0B
+		elseif "\char"='='
+			dc.b	$0C
+		elseif "\char"=">"
+			dc.b	$0D
+		;elseif "\char"=">"
+		;	dc.b	$0E
+		elseif "\char"='Y'
+			dc.b	$0F
+		elseif "\char"='Z'
+			dc.b	$10
+		elseif ("\char">='A')&("\char"<='X')
+			dc.b	$11+"\char"-'A'
+		else
+			inform 2, "illegal char \char"
+		endif
+	endw
+	endm
+
+LevelMenuText:
+		lstxt "GREEN HILL ZONE  STAGE 1"
+		lstxt "                 STAGE 2"
+		lstxt "                 STAGE 3"
+		lstxt "LABYRINTH ZONE   STAGE 1"
+		lstxt "                 STAGE 2"
+		lstxt "                 STAGE 3"
+		lstxt "MARBLE ZONE      STAGE 1"
+		lstxt "                 STAGE 2"
+		lstxt "                 STAGE 3"
+		lstxt "STAR LIGHT ZONE  STAGE 1"
+		lstxt "                 STAGE 2"
+		lstxt "                 STAGE 3"
+		lstxt "SPRING YARD ZONE STAGE 1"
+		lstxt "                 STAGE 2"
+		lstxt "                 STAGE 3"
+		lstxt "SCRAP BRAIN ZONE STAGE 1"
+		lstxt "                 STAGE 2"
+		lstxt "                 STAGE 3"
+		lstxt "FINAL ZONE              "
+		lstxt "SPECIAL STAGE           "
+		lstxt "SOUND SELECT            "
+		even</textarea>
+        </div>
+        <div>
+          <input id="clipboard" type="button" value="Copy to clipboard">
+        </div>
+      </blockquote>
+    </div>
+  </div>
+</body>
+</html>
