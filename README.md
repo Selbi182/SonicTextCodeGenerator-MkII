@@ -15,3 +15,4 @@ A few third-party fonts were used to spice up the design of this app. Here are a
 * Sonic 1 Title Cards: https://fontstruct.com/fontstructions/show/2709973/sonic-1-title-card-fixed
 * Sonic 1 Credits: https://fontstruct.com/fontstructions/show/2378084/broadway-pixel-c
 * Sonic 2 Title Cards: https://fontstruct.com/fontstructions/show/1828880/sonic-2-6
+* Sonic 3 Title Cards: https://fontstruct.com/fontstructions/show/2374562/sonic-3-knux-title-card
