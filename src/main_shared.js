@@ -190,6 +190,14 @@ header.innerHTML = `
         <a class="S2_misc" href="../../sonic2/misc">Misc</a>
       </div>
     </div>
+    <div class="row lc">
+      <div class="badge">Sonic 3</div>
+      <div>
+        <a class="S3_titlecards" href="../../sonic3/titlecards">Zone Title Cards</a>
+        &bull;
+        <span class="small">More coming soon...</small>
+      </div>
+    </div>
   </div>
 `;
 if (window.location.protocol === "file:") {
