@@ -36,18 +36,19 @@ const out = $("#text-out");
 const status = $("#status");
 const summary = $("#summary");
 const condataOut = $("#condata-out");
-const condataOutNoAct = $("#condata-out-noact");
+
+const checkboxAct = $("#check-act");
+const checkboxZone = $("#check-zone");
+const checkboxOval = $("#check-oval");
 
 // Set up clipboard buttons
 const clipboard = $("#clipboard");
 const clipboardCon = $("#clipboard-condata-out");
-const clipboardConNoAct = $("#clipboard-condata-out-noact");
 clipboard.onclick = () => copyToClipboard(clipboard, out);
 clipboardCon.onclick = () => copyToClipboard(clipboardCon, condataOut);
-clipboardConNoAct.onclick = () => copyToClipboard(clipboardConNoAct, condataOutNoAct);
 
 // Register input event listeners
-[inputText, inputX, inputY].forEach(el => el.addEventListener("input", generateOutput));
+[inputText, inputX, inputY, checkboxAct, checkboxZone, checkboxOval].forEach(el => el.addEventListener("input", generateOutput));
 generateOutput();
 
 ////////////////////
@@ -106,14 +107,14 @@ function generateOutput() {
     const w = measureTextWidth(text, LETTERS);
     const offset = isAutoX ? 0 : (xStartManual - xStartAuto);
     
-    const conDataLine = buildConData(title, w, offset);
-    $("#condata-out").value = conDataLine;
+    const showAct = checkboxAct.querySelector("input[type=checkbox]").checked ?? true;
+    const showZone = checkboxZone.querySelector("input[type=checkbox]").checked ?? true;
+    const showOval = checkboxOval.querySelector("input[type=checkbox]").checked ?? true;
     
-    const conDataLineNoAct = buildConData(title, w, offset, true);
-    $("#condata-out-noact").value = conDataLineNoAct;
+    const conDataLine = buildConData(title, w, offset, showAct, showZone, showOval);
+    $("#condata-out").value = conDataLine;
   } else {
     $("#condata-out").value = "";
-    $("#condata-out-noact").value = "";
   }
 
   // Update status
@@ -133,29 +134,37 @@ function generateOutput() {
 ////////////////////
 // ConData generator
 
-function buildConData(title, textWidth, offset = 0, noAct = false) {
-  const noActAdjust = (noAct ? 0x10 : 0);
+function buildConData(title, textWidth, offset = 0, showAct = true, showZone = true, showOval = true) {
+  const OFFSCREEN = 0x03EC;
+  
+  const noActAdjust = (showAct ? 0 : 0x10);
 
   const widthHalf = Math.floor(textWidth / 2.0);
   
-  const NAME_start = 0x0000;
+  const NAME_start  = 0x0000;
   const NAME_target = 0x0120;
 
   const ZONE_target = (0x00F0 + widthHalf + noActAdjust + offset) & 0xFFFF;
-  const ZONE_start = (ZONE_target - 0x0240 + noActAdjust) & 0xFFFF;
+  const ZONE_start  = (ZONE_target - 0x0240 + noActAdjust) & 0xFFFF;
 
   const OVAL_target = (ZONE_target + 0x0018 - noActAdjust) & 0xFFFF;
-  const OVAL_start = (OVAL_target + 0x00C0 - noActAdjust) & 0xFFFF;
+  const OVAL_start  = (OVAL_target + 0x00C0 - noActAdjust) & 0xFFFF;
 
-  const ACT_target = noAct ? 0x03EC : OVAL_target;
-  const ACT_start  = noAct ? 0x03EC : (ACT_target + 0x02C0) & 0xFFFF;
+  const ACT_target  = OVAL_target;
+  const ACT_start   = (ACT_target + 0x02C0) & 0xFFFF;
+
+  let hidden = [];
+  if (!showAct) hidden.push("Act");
+  if (!showZone) hidden.push("Zone");
+  if (!showOval) hidden.push("Oval");
+  const hiddenText = hidden.length > 0 ? ` (hide ${hidden.join(", ")})` : "";
 
   return `\t\tdc.w `
     + `$${hex16(NAME_start)},$${hex16(NAME_target)}, `
-    + `$${hex16(ZONE_start)},$${hex16(ZONE_target)}, `
-    + `$${hex16(ACT_start)},$${hex16(ACT_target)}, `
-    + `$${hex16(OVAL_start)},$${hex16(OVAL_target)}`
-    + `\t; ${title.toUpperCase()}${noAct ? " (hide Act)" : ""}`;
+    + `$${hex16(showZone ? ZONE_start : OFFSCREEN)},$${hex16(showZone ? ZONE_target : OFFSCREEN)}, `
+    + `$${hex16(showAct ? ACT_start : OFFSCREEN)},$${hex16(showAct ? ACT_target : OFFSCREEN)}, `
+    + `$${hex16(showOval ? OVAL_start : OFFSCREEN)},$${hex16(showOval ? OVAL_target : OFFSCREEN)}`
+    + `\t; ${title.toUpperCase()}${hiddenText}`;
 }
 
 ////////////////////
@@ -163,6 +172,5 @@ function buildConData(title, textWidth, offset = 0, noAct = false) {
 
 function resetClipboardButtons() {
   resetClipboardButton(clipboard, "Copy to clipboard");
-  resetClipboardButton(clipboardCon, "Copy ConData (with Act)");
-  resetClipboardButton(clipboardConNoAct, "Copy ConData (hide Act)");
+  resetClipboardButton(clipboardCon, "Copy ConData");
 }

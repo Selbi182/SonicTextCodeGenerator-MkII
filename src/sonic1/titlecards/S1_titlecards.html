@@ -49,10 +49,21 @@
           <label for="condata-out">ConData &mdash; used for positioning the name, "ZONE", Act number, and Oval:</label>
           <div class="grid">
             <input type="text" readonly autocomplete="off" id="condata-out" placeholder="ConData is generated here">
-            <input id="clipboard-condata-out" type="button" value="Copy ConData (with Act)">
-            
-            <input type="text" readonly autocomplete="off" id="condata-out-noact" placeholder="ConData is generated here (hide Act, for Final Zone)">
-            <input id="clipboard-condata-out-noact" type="button" value="Copy ConData (hide Act)">
+            <input id="clipboard-condata-out" type="button" value="Copy ConData">
+            <span class="toggle-wrap">
+              <label id="check-act" class="toggle">
+                <input type="checkbox" checked autocomplete="off">
+                <span>Show "ACT"</span>
+              </label>
+              <label id="check-zone" class="toggle">
+                <input type="checkbox" checked autocomplete="off">
+                <span>Show "ZONE"</span>
+              </label>
+              <label id="check-oval" class="toggle">
+                <input type="checkbox" checked autocomplete="off">
+                <span>Show Oval</span>
+              </label>
+            </span>
           </div>
         </div>
       </div>
