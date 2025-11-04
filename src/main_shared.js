@@ -216,6 +216,8 @@ const footer = document.createElement("footer");
 footer.innerHTML = `
   Created by <a href="https://selbi.club">Selbi</a> with help from RobiWanKenobi
   &bull;
+  <a href="https://info.sonicretro.org/Sonic_Text_Code_Generator_-_Mk._II">Wiki</a>
+  &bull;
   <a href="https://github.com/Selbi182/SonicTextCodeGenerator-MkII">Source Code</a>
 `;
 mainContent.append(footer);
