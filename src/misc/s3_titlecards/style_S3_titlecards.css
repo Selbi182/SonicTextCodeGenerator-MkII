@@ -1,0 +1,38 @@
+:root {
+  --titlecard: "Sonic3TitleCards", sans-serif;
+}
+
+@font-face {
+  font-family: "Sonic3TitleCards";
+  src: url('../../font/sonic-3-title-card.otf.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.sonic-font {
+  font-family: var(--titlecard);
+  letter-spacing: 2px;
+}
+
+#misc-locations {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+#misc-locations td, #misc-locations th {
+  border: transparent;
+  padding: 8px;
+}
+
+#misc-locations tr:nth-child(odd) {
+  background-color: var(--bg);
+}
+
+#misc-locations th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: black;
+  color: white;
+}

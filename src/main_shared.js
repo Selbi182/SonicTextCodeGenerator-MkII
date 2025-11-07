@@ -161,45 +161,7 @@ const mainContent = document.querySelector("body .wrap");
 
 // Header
 const header = document.createElement("header");
-header.innerHTML = `
-  <h1>
-    <span class="sonic-font">Sonic Text Code Generator</span> <span class="small mkii">Mk.&nbsp;II</span>
-  </h1>
-  <div id="change-generator">
-    <div class="row lc">
-      <div class="badge">Sonic 1</div>
-      <div>
-        <a class="S1_titlecards" href="../../sonic1/titlecards">Zone Title Cards</a>
-        &bull;
-        <a class="S1_credits" href="../../sonic1/credits">Credits</a>
-        &bull;
-        <a class="S1_levelselect" href="../../sonic1/levelselect">Level Select</a>
-        &bull;
-        <a class="S1_misc" href="../../sonic1/misc">Misc</a>
-      </div>
-    </div>
-    <div class="row lc">
-      <div class="badge">Sonic 2</div>
-      <div>
-        <a class="S2_titlecards" href="../../sonic2/titlecards">Zone Title Cards</a>
-        &bull;
-        <a class="S2_endoflevel" href="../../sonic2/endoflevel">End of Level</a>
-        &bull;
-        <a class="S2_levelselect" href="../../sonic2/levelselect">Level Select</a>
-        &bull;
-        <a class="S2_misc" href="../../sonic2/misc">Misc</a>
-      </div>
-    </div>
-    <div class="row lc">
-      <div class="badge">Sonic 3</div>
-      <div>
-        <a class="S3_titlecards" href="../../sonic3/titlecards">Zone Title Cards</a>
-        &bull;
-        <span class="small">More coming soon...</small>
-      </div>
-    </div>
-  </div>
-`;
+header.innerHTML = HTML_HEADER;
 if (window.location.protocol === "file:") {
   header.querySelectorAll("a").forEach(el => {
     el.href += `/${el.classList}.html`;
@@ -213,11 +175,5 @@ mainContent.prepend(header);
 
 // Footer
 const footer = document.createElement("footer");
-footer.innerHTML = `
-  Created by <a href="https://selbi.club">Selbi</a> with help from RobiWanKenobi
-  &bull;
-  <a href="https://info.sonicretro.org/Sonic_Text_Code_Generator_-_Mk._II">Wiki</a>
-  &bull;
-  <a href="https://github.com/Selbi182/SonicTextCodeGenerator-MkII">Source Code</a>
-`;
+footer.innerHTML = HTML_FOOTER;
 mainContent.append(footer);
