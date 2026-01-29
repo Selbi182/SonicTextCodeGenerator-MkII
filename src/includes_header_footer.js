@@ -27,12 +27,12 @@ const HTML_HEADER =
         <a class="S2_misc" href="../../sonic2/misc">Misc</a>
       </div>
     </div>
-    <div class="row lc">
+    <div class="row lc other">
       <div class="badge">Other</div>
       <div>
-        <a class="S3_titlecards" href="../../misc/s3_titlecards">Sonic 3 Title Cards</a>
+        <a href="https://www.youtube.com/watch?v=55j_85b0pj8" target="_blank">Video Tutorial</a>
         &bull;
-        <a class="hex2asm" href="../../misc/hex2asm">HEX2ASM</a>
+        <a href="https://github.com/RobiTheGit/S3TCG" target="_blank">Sonic 3 Title Cards</a>
       </div>
     </div>
   </div>`;

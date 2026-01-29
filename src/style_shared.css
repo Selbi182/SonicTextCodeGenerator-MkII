@@ -58,7 +58,7 @@ header {
 }
 
 header .badge {
-  min-width: 64px;
+  min-width: 70px;
   text-align: center;
 }
 
@@ -192,6 +192,7 @@ input[type="checkbox"] {
   justify-content: start;
   align-items: center;
   gap: 0 6px;
+  flex-wrap: nowrap;
 }
 
 .hint {

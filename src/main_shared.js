@@ -49,7 +49,7 @@ function createLetterPiece(char, yPos, xPos, letters) {
   return {
     mapping: `\t\t; ${char.toUpperCase()} ${
       /^[A-Z]$/i.test(char)
-        ? "does not exist in the Sonic 1 font"
+        ? "does not exist in the font art"
         : "is an invalid character"
       }`,
     width: DEFAULTS.width,
@@ -163,7 +163,7 @@ const mainContent = document.querySelector("body .wrap");
 const header = document.createElement("header");
 header.innerHTML = HTML_HEADER;
 if (window.location.protocol === "file:") {
-  header.querySelectorAll("a").forEach(el => {
+  header.querySelectorAll("a:not([target=_blank])").forEach(el => {
     el.href += `/${el.classList}.html`;
   });
   console.log("Running locally");
